@@ -30,14 +30,31 @@ try:
 except ImportError:
     PDF_AVAILABLE = False
 
-# Load spaCy model if available
+import subprocess
+import sys
+import spacy
+
+
+# Load spaCy model if available, otherwise download and load it
 @st.cache_resource
 def load_nlp_model():
-    if SPACY_AVAILABLE:
+    try:
+        # Try to load the spaCy model
         return spacy.load("en_core_web_sm")
-    return None
+    except OSError:  # Model not found
+        # Download the model
+        subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
+        # Load the model after downloading
+        return spacy.load("en_core_web_sm")
 
+# Use the loaded model
 nlp = load_nlp_model()
+
+if nlp:
+    st.write("spaCy model loaded successfully!")
+else:
+    st.write("spaCy model could not be loaded.")
+
 
 def validate_document(file):
     file_type, _ = mimetypes.guess_type(file.name)
