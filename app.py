@@ -50,10 +50,6 @@ def load_nlp_model():
 # Use the loaded model
 nlp = load_nlp_model()
 
-if nlp:
-    st.write("spaCy model loaded successfully!")
-else:
-    st.write("spaCy model could not be loaded.")
 
 
 def validate_document(file):
