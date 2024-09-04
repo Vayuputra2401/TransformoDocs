@@ -50,6 +50,23 @@ def load_nlp_model():
 # Use the loaded model
 nlp = load_nlp_model()
 
+from transformers import pipeline
+
+# Load a smaller LLM, like GPT-2 or GPT-J
+@st.cache_resource
+def load_llm_model():
+    return pipeline("text-generation", model="gpt2")  # You can use a different model if needed
+
+llm_model = load_llm_model()
+
+def ask_question_to_document(question, document_text):
+    prompt = f"Document: {document_text}\n\nQuestion: {question}\nAnswer:"
+    
+    # Use the LLM to generate a response
+    response = llm_model(prompt, max_length=600, num_return_sequences=1)
+    return response[0]['generated_text'].split("Answer:")[1].strip()
+
+
 
 
 def validate_document(file):
@@ -247,7 +264,7 @@ def main():
             st.error(f"Error: {result['error']}")
         else:
             st.success("Document processed successfully!")
-
+            
     with col2:
         st.subheader("💾 Export Options")
         export_format = st.selectbox("Choose export format", ["JSON", "XML"])
@@ -301,6 +318,36 @@ def main():
         with st.expander("📝 Document Preview"):
             preview_text = result['extracted_text'][:500] + "..." if len(result['extracted_text']) > 500 else result['extracted_text']
             st.text_area("First 500 characters", preview_text, height=200)
+    
+    # Display chat interface
+    st.subheader("💬 Chat with Your Document")
+
+    # Initialize session state to store chat history
+    if "chat_history" not in st.session_state:
+        st.session_state["chat_history"] = []
+
+    # Input box for user queries
+    user_query = st.text_input("Ask a question about the document:")
+
+    # Check if there is a user query and process it
+    if user_query:
+        document_text = result["extracted_text"]
+        answer = ask_question_to_document(user_query, document_text)
+        
+        # Append the user query and the generated answer to the chat history
+        st.session_state["chat_history"].append({"question": user_query, "answer": answer})
+
+    # Display the chat history
+    if st.session_state["chat_history"]:
+        st.write("### 🗨️ Chat History")
+        for chat in st.session_state["chat_history"]:
+            st.markdown(f"**You:** {chat['question']}")
+            st.markdown(f"**Transformo Docs:** {chat['answer']}")
+
+    # Option to clear chat history
+    if st.button("Clear Chat History"):
+        st.session_state["chat_history"] = []
+    
 
 if __name__ == "__main__":
     main()
