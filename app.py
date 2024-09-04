@@ -9,7 +9,7 @@ from collections import Counter
 import io
 
 # Set page config
-st.set_page_config(page_title="Document Processor", layout="wide")
+st.set_page_config(page_title="Transformo-Docs", layout="wide")
 
 # Try to import optional dependencies
 try:
@@ -213,8 +213,17 @@ def process_document(file):
         return {"error": str(e)}
 
 def main():
-    st.title("📄 Document Processor")
-    st.write("Upload a document to analyze and process it.")
+    
+    st.title("📄 Transformo Docs")
+
+    st.write("""
+        ### 🚀 Transformo Docs: Empowering Document Management
+
+    Transformo Docs is a powerful solution designed to tackle the challenge of non-machine-readable documents like PDFs and Word files. 🌐 This app automates the conversion of such documents into machine-readable formats, making them searchable, accessible, and ready for AI integration. 🤖
+
+    Whether you’re working with scanned documents or files generated through software, Transformo Docs ensures your data is always organized and easily accessible. 📊 Unlock the potential of automation, advanced analytics, and compliance with Transformo Docs—streamline your document management and boost productivity. 📈
+    """)
+
 
     if not SPACY_AVAILABLE:
         st.warning("spaCy is not installed. Some advanced text analysis features will be limited.")
@@ -223,8 +232,13 @@ def main():
     if not PDF_AVAILABLE:
         st.warning("PyPDF2 is not installed. PDF file processing will not be available.")
 
-    uploaded_file = st.file_uploader("Choose a file", type=["pdf", "docx", "txt", "xlsx"])
+    col1, col2 = st.columns(2)
 
+    with col1:
+        st.subheader("📤 Upload Document")
+        uploaded_file = st.file_uploader("Choose a file", type=["pdf", "docx", "txt", "xlsx"])
+
+    result = None
     if uploaded_file is not None:
         with st.spinner("Processing document..."):
             result = process_document(uploaded_file)
@@ -234,33 +248,11 @@ def main():
         else:
             st.success("Document processed successfully!")
 
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.subheader("📊 Analytics")
-                st.write(f"**Word Count:** {result['analytics']['word_count']}")
-                st.write(f"**Sentence Count:** {result['analytics']['sentence_count']}")
-                st.write(f"**Average Sentence Length:** {result['analytics']['average_sentence_length']:.2f} words")
-                if SPACY_AVAILABLE:
-                    st.write(f"**Entity Count:** {result['analytics']['entity_count']}")
-                    st.write(f"**Keyword Count:** {result['analytics']['keyword_count']}")
-
-                    st.write("**Most Common Entities:**")
-                    for entity, count in result['analytics']['most_common_entities']:
-                        st.write(f"- {entity}: {count}")
-
-                st.write("**Most Common Words:**")
-                for word, count in result['analytics']['most_common_words']:
-                    st.write(f"- {word}: {count}")
-
-            with col2:
-                st.subheader("📝 Document Preview")
-                preview_text = result['extracted_text'][:500] + "..." if len(result['extracted_text']) > 500 else result['extracted_text']
-                st.text_area("First 500 characters", preview_text, height=300)
-
-            st.subheader("💾 Export Options")
-            export_format = st.selectbox("Choose export format", ["JSON", "XML"])
-            
+    with col2:
+        st.subheader("💾 Export Options")
+        export_format = st.selectbox("Choose export format", ["JSON", "XML"])
+        
+        if result:
             if export_format == "JSON":
                 download_content = result['json_output']
                 file_extension = "json"
@@ -278,6 +270,37 @@ def main():
 
             with st.expander("View Processed Output"):
                 st.code(download_content, language=file_extension.lower())
+
+    if result and "error" not in result:
+        st.subheader("📊 Document Analytics")
+        col3, col4 = st.columns(2)
+
+        with col3:
+            st.markdown("### 📏 Basic Metrics")
+            st.write(f"**Word Count:** {result['analytics']['word_count']}")
+            st.write(f"**Sentence Count:** {result['analytics']['sentence_count']}")
+            st.write(f"**Average Sentence Length:** {result['analytics']['average_sentence_length']:.2f} words")
+
+            if SPACY_AVAILABLE:
+                st.markdown("### 🏷️ Named Entities")
+                st.write(f"**Entity Count:** {result['analytics']['entity_count']}")
+                st.write("**Most Common Entities:**")
+                for entity, count in result['analytics']['most_common_entities']:
+                    st.write(f"- {entity}: {count}")
+
+        with col4:
+            if SPACY_AVAILABLE:
+                st.markdown("### 🔑 Keywords")
+                st.write(f"**Keyword Count:** {result['analytics']['keyword_count']}")
+
+            st.markdown("### 📊 Word Frequency")
+            st.write("**Most Common Words:**")
+            for word, count in result['analytics']['most_common_words']:
+                st.write(f"- {word}: {count}")
+
+        with st.expander("📝 Document Preview"):
+            preview_text = result['extracted_text'][:500] + "..." if len(result['extracted_text']) > 500 else result['extracted_text']
+            st.text_area("First 500 characters", preview_text, height=200)
 
 if __name__ == "__main__":
     main()
