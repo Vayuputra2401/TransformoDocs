@@ -50,21 +50,23 @@ def load_nlp_model():
 # Use the loaded model
 nlp = load_nlp_model()
 
-from transformers import pipeline
+#from transformers import pipeline
 
-# Load a smaller LLM, like GPT-2 or GPT-J
-@st.cache_resource
-def load_llm_model():
-    return pipeline("text-generation", model="gpt2")  # You can use a different model if needed
+# # Load a smaller LLM, like GPT-2 or GPT-J
+# @st.cache_resource
+# def load_llm_model():
+#     return pipeline("text-generation", model="gpt2")  # You can use a different model if needed
 
-llm_model = load_llm_model()
+#llm_model = load_llm_model()
 
 def ask_question_to_document(question, document_text):
     prompt = f"Document: {document_text}\n\nQuestion: {question}\nAnswer:"
     
-    # Use the LLM to generate a response
-    response = llm_model(prompt, max_length=600, num_return_sequences=1)
-    return response[0]['generated_text'].split("Answer:")[1].strip()
+    # # Use the LLM to generate a response
+    # response = llm_model(prompt, max_length=600, num_return_sequences=1)
+    # return response[0]['generated_text'].split("Answer:")[1].strip()
+    response = "Sorry , LLM disabled at the moment for prototype."
+    return response
 
 
 
