@@ -1,0 +1,6 @@
+{
+    "id": "429a8ead-37cf-47be-972d-7bc5d4a79f1e",
+    "filename": "test_document",
+    "date": "2024-09-27T20:41:32.029200",
+    "data": "{\"extracted_text\": \"This is a test extracted text.\", \"analytics\": {\"word_count\": 6, \"sentence_count\": 1, \"most_common_entities\": [[\"TEST_ENTITY\", 1]], \"most_common_words\": [[\"test\", 2], [\"extracted\", 1]]}, \"structured_data\": {\"key\": \"value\"}}"
+}
