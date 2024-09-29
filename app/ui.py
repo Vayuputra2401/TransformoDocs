@@ -19,7 +19,8 @@ def calculate_file_sizes(uploaded_file, result):
 
 # Function to load and display the logo
 def load_logo():
-    logo_path = os.path.join("assets", "logo-white.png")  # Path to the logo file
+    logo_path = os.path.join("assets", "logo-white.png")
+    print(logo_path)
     if os.path.exists(logo_path):
         return Image.open(logo_path)
     return None
