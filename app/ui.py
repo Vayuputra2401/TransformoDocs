@@ -26,7 +26,7 @@ def load_logo():
         return Image.open(local_logo_path)
     
     # If local logo is not found, try to fetch from GitHub
-    github_logo_url = "https://raw.githubusercontent.com/vayuputra2401/transformodocs/main/app/main.py/assets/logo-white.png"
+    github_logo_url = "https://raw.githubusercontent.com/vayuputra2401/transformodocs/main/app/assets/logo-white.png"
     try:
         response = requests.get(github_logo_url)
         if response.status_code == 200:
