@@ -9,6 +9,7 @@ from datetime import datetime
 import json
 from PIL import Image
 import io
+import requests
 import os
 
 # Function to calculate file sizes
@@ -19,11 +20,21 @@ def calculate_file_sizes(uploaded_file, result):
 
 # Function to load and display the logo
 def load_logo():
-    global logo_path
-    logo_path = os.path.join("assets", "logo-white.png")
-    print(logo_path)
-    if os.path.exists(logo_path):
-        return Image.open(logo_path)
+    # First, try to load the logo from the local assets folder
+    local_logo_path = os.path.join("assets", "logo.png")
+    if os.path.exists(local_logo_path):
+        return Image.open(local_logo_path)
+    
+    # If local logo is not found, try to fetch from GitHub
+    github_logo_url = "https://raw.githubusercontent.com/vayuputra2401/transformodocs/main/app/main.py/assets/logo-white.png"
+    try:
+        response = requests.get(github_logo_url)
+        if response.status_code == 200:
+            return Image.open(io.BytesIO(response.content))
+    except Exception as e:
+        st.warning(f"Failed to fetch logo from GitHub: {str(e)}")
+    
+    # If both local and GitHub logo fetch fail, return None
     return None
 
 # Main page setup function
@@ -34,8 +45,6 @@ def setup_page():
     logo = load_logo()
     if logo:
         st.sidebar.image(logo, width=250)
-    else:
-        st.warning(logo_path)
     st.sidebar.title("📄 Transformo Docs")
     pages = {
         "Home": home_page,
