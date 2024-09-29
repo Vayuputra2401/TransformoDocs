@@ -5,17 +5,34 @@ import pandas as pd
 from extractor import validate_document, extract_text
 from processor import process_document, ask_question_to_document
 from database import save_to_database, get_saved_documents, delete_document
-import pandas as pd
 from datetime import datetime
 import json
+from PIL import Image
+import io
+import os
 
+# Function to calculate file sizes
 def calculate_file_sizes(uploaded_file, result):
     original_size_mb = uploaded_file.size / (1024 * 1024)
     extracted_size_mb = len(json.dumps(result['json_output'])) / (1024 * 1024)
     return original_size_mb, extracted_size_mb
 
+# Function to load and display the logo
+def load_logo():
+    logo_path = os.path.join("assets", "logo-white.png")  # Path to the logo file
+    if os.path.exists(logo_path):
+        return Image.open(logo_path)
+    return None
+
+# Main page setup function
 def setup_page():
     st.set_page_config(page_title="Transformo-Docs", layout="wide")
+    
+    # Load and display logo
+    logo = load_logo()
+    if logo:
+        st.sidebar.image(logo, width=250)
+    
     st.sidebar.title("📄 Transformo Docs")
     pages = {
         "Home": home_page,
@@ -25,41 +42,92 @@ def setup_page():
     }
     page = st.sidebar.radio("Navigate", list(pages.keys()))
     pages[page]()
-    
 
-
+# Home page function
 def home_page():
-    st.title("🏠 Welcome to Transformo Docs")
-    st.write("""
-        ### 🚀 Transformo Docs: Empowering Document Management
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        st.title("🏠 Welcome to Transformo Docs")
+        st.markdown("""
+        <style>
+        .big-font {
+            font-size:20px !important;
+            color: #1E88E5;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        st.markdown('<p class="big-font">🚀 Empowering Document Management</p>', unsafe_allow_html=True)
+        
+        st.write("""
+        Transformo Docs is a powerful solution designed to tackle the challenge of non-machine-readable documents like PDFs and Word files. 
+        
+        🌐 This app automates the conversion of such documents into machine-readable formats, making them:
+        - 🔍 Searchable
+        - 📄 Accessible
+        - 🤖 Ready for AI integration
+        
+        Whether you're working with scanned documents or files generated through software, Transformo Docs ensures your data is always organized and easily accessible.
+        """)
+        
+        st.markdown("""
+        ---
+        ### 🎯 Key Features
+        - 📊 Advanced Analytics
+        - 🔄 Automated Conversion
+        - 🔐 Compliance Ready
+        - 📈 Productivity Boost
+        """)
 
-    Transformo Docs is a powerful solution designed to tackle the challenge of non-machine-readable documents like PDFs and Word files. 🌐 This app automates the conversion of such documents into machine-readable formats, making them searchable, accessible, and ready for AI integration. 🤖
-
-    Whether you're working with scanned documents or files generated through software, Transformo Docs ensures your data is always organized and easily accessible. 📊 Unlock the potential of automation, advanced analytics, and compliance with Transformo Docs—streamline your document management and boost productivity. 📈
-    """)
+    
     st.info("Use the sidebar to navigate through different features of the application.")
 
+    # Custom button styling
+    st.markdown("""
+    <style>
+    .stButton>button {
+        width: 100%;
+        height: 3em;
+        background-color: #4CAF50;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .stButton>button:hover {
+        background-color: #45a049;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Document processing page function
 def document_processing_page():
     st.title("🔄 Document Processing")
     
     uploaded_file = upload_document()
     template = st.selectbox(
-    "Choose a template for extraction",
-    ["Default", "Data Only", "Analytics Only", "Specific Entities"],
-    help="Select a predefined template for structuring the output."
-)
+        "Choose a template for extraction",
+        ["Default", "Data Only", "Analytics Only", "Specific Entities"],
+        help="Select a predefined template for structuring the output."
+    )
     custom_fields = st.multiselect(
-    "Select custom fields to extract",
-    ["Persons", "Organizations", "Locations", "Dates"],
-    help="Choose specific entity types you want to extract from the document."
-)
+        "Select custom fields to extract",
+        ["Persons", "Organizations", "Locations", "Dates"],
+        help="Choose specific entity types you want to extract from the document."
+    )
     
     result = None
     if uploaded_file is not None:
         with st.spinner("Processing document..."):
             try:
+                # Validate and extract text from the document
                 file_type = validate_document(uploaded_file)
                 extracted_text = extract_text(uploaded_file, file_type)
+                
+                # Process the document with selected template and custom fields
                 template = template.lower().replace(" ", "_") if template != "Default" else None
                 custom_fields = [field.lower() for field in custom_fields] if custom_fields else None
                 result = process_document(extracted_text, template, custom_fields)
@@ -70,22 +138,33 @@ def document_processing_page():
                         st.write(warning)
                 else:
                     st.success("Document processed successfully!")
+                
+                # Save result in session state
+                st.session_state.result = result
             except Exception as e:
                 st.error(f"Error: {str(e)}")
 
-    if result:
-        display_export_options(result, uploaded_file)
-        display_analytics(result)
-        display_graphs(result, uploaded_file)
-        display_database_options(result, uploaded_file.name)
+    if 'result' in st.session_state:
+        display_export_options(st.session_state.result, uploaded_file)
+        display_analytics(st.session_state.result)
+        display_graphs(st.session_state.result, uploaded_file)
+        display_database_options(st.session_state.result, uploaded_file.name)
 
+# Function to handle document upload
 def upload_document():
     st.subheader("📤 Upload Document")
+    if 'uploaded_file' not in st.session_state:
+        st.session_state.uploaded_file = None
+    
     uploaded_file = st.file_uploader("Choose a file", type=["pdf", "docx", "txt", "xlsx"])
-    if uploaded_file:
+    
+    if uploaded_file is not None:
+        st.session_state.uploaded_file = uploaded_file
         st.info(f"File '{uploaded_file.name}' uploaded successfully. Choose a template and custom fields for extraction.")
-    return uploaded_file
+    
+    return st.session_state.uploaded_file
 
+# Function to display export options
 def display_export_options(result, uploaded_file):
     st.subheader("💾 Export Options")
     export_format = st.selectbox("Choose export format", ["JSON", "XML"])
@@ -108,6 +187,7 @@ def display_export_options(result, uploaded_file):
     with st.expander("View Processed Output"):
         st.code(download_content, language=file_extension.lower())
 
+# Function to display analytics
 def display_analytics(result):
     st.subheader("📊 Document Analytics")
     col1, col2 = st.columns(2)
@@ -136,8 +216,9 @@ def display_analytics(result):
     with st.expander("📝 Document Preview"):
         preview_text = result['extracted_text'][:500] + "..." if len(result['extracted_text']) > 500 else result['extracted_text']
         st.text_area("First 500 characters", preview_text, height=200)
-        
-def display_graphs(result,uploaded_file):
+
+# Function to display graphs
+def display_graphs(result, uploaded_file):
     st.subheader("📈 Visualizations")
     col1, col2 = st.columns(2)
 
@@ -197,6 +278,7 @@ def display_graphs(result,uploaded_file):
     keyword_data = pd.DataFrame(result['analytics']['most_common_words'], columns=['Keyword', 'Count'])
     st.dataframe(keyword_data)
 
+# Function to display database options
 def display_database_options(result, filename):
     st.subheader("💽 Database Options")
     st.info("Choose a database to save the processed document. Currently, only local storage is available.")
@@ -210,6 +292,7 @@ def display_database_options(result, filename):
     else:
         st.warning("Selected database option is currently disabled.")
 
+# Function for saved documents page
 def saved_documents_page():
     st.title("💾 Saved Documents")
     st.info("This page displays all documents saved in the local storage.")
@@ -243,6 +326,8 @@ def saved_documents_page():
                 delete_document(row['id'])
                 st.experimental_rerun()
 
+
+# Function for chat interface page
 def chat_interface_page():
     st.title("💬 Chat with Your Document")
     st.info("This feature allows you to ask questions about your processed documents.")
@@ -273,9 +358,12 @@ def chat_interface_page():
 
     if st.button("Clear Chat History"):
         st.session_state["chat_history"] = []
+        st.success("Chat history cleared!")
 
+# Main function to run the Streamlit app
 def main():
     setup_page()
 
+# Entry point of the script
 if __name__ == "__main__":
     main()
