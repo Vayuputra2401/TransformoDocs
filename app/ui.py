@@ -19,6 +19,7 @@ def calculate_file_sizes(uploaded_file, result):
 
 # Function to load and display the logo
 def load_logo():
+    global logo_path
     logo_path = os.path.join("assets", "logo-white.png")
     print(logo_path)
     if os.path.exists(logo_path):
@@ -33,7 +34,8 @@ def setup_page():
     logo = load_logo()
     if logo:
         st.sidebar.image(logo, width=250)
-    
+    else:
+        st.warning(logo_path)
     st.sidebar.title("📄 Transformo Docs")
     pages = {
         "Home": home_page,
