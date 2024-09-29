@@ -9,6 +9,11 @@ import pandas as pd
 from datetime import datetime
 import json
 
+def calculate_file_sizes(uploaded_file, result):
+    original_size_mb = uploaded_file.size / (1024 * 1024)
+    extracted_size_mb = len(json.dumps(result['json_output'])) / (1024 * 1024)
+    return original_size_mb, extracted_size_mb
+
 def setup_page():
     st.set_page_config(page_title="Transformo-Docs", layout="wide")
     st.sidebar.title("📄 Transformo Docs")
@@ -20,6 +25,8 @@ def setup_page():
     }
     page = st.sidebar.radio("Navigate", list(pages.keys()))
     pages[page]()
+    
+
 
 def home_page():
     st.title("🏠 Welcome to Transformo Docs")
@@ -69,7 +76,7 @@ def document_processing_page():
     if result:
         display_export_options(result, uploaded_file)
         display_analytics(result)
-        display_graphs(result)
+        display_graphs(result, uploaded_file)
         display_database_options(result, uploaded_file.name)
 
 def upload_document():
@@ -130,7 +137,7 @@ def display_analytics(result):
         preview_text = result['extracted_text'][:500] + "..." if len(result['extracted_text']) > 500 else result['extracted_text']
         st.text_area("First 500 characters", preview_text, height=200)
         
-def display_graphs(result):
+def display_graphs(result,uploaded_file):
     st.subheader("📈 Visualizations")
     col1, col2 = st.columns(2)
 
@@ -169,6 +176,20 @@ def display_graphs(result):
     fig.update_layout(title_text='Basic Document Metrics', barmode='group')
     st.plotly_chart(fig, use_container_width=True)
 
+    # File Size Comparison Graph
+    original_size, extracted_size = calculate_file_sizes(uploaded_file, result)
+    size_diff = original_size - extracted_size
+    size_diff_percentage = (size_diff / original_size) * 100
+
+    fig = go.Figure(data=[
+        go.Bar(name='Original Size', x=['Document Size'], y=[original_size]),
+        go.Bar(name='Extracted Size', x=['Document Size'], y=[extracted_size])
+    ])
+    fig.update_layout(title_text='Document Size Comparison (MB)', barmode='group')
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.info(f"Size reduction: {size_diff:.2f} MB ({size_diff_percentage:.2f}%)")
+    
     # Keyword Information
     st.subheader("🔑 Keyword Information")
     st.write(f"**Total Keywords:** {result['analytics']['keyword_count']}")
