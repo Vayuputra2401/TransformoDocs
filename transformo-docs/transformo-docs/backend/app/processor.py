@@ -4,49 +4,33 @@ from collections import Counter
 import json
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
-from transformers import pipeline
 
-#nlp = spacy.load("en_core_web_sm")
-
-# Load spaCy model
-nlp = spacy.load("en_core_web_trf")  # Use the transformer-based spaCy model for better performance
-
-# Load BERT model for document classification
-classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+nlp = spacy.load("en_core_web_sm")
 
 def clean_text(text):
     text = ''.join(char for char in text if char.isprintable())
     text = text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
     return text
 
-def classify_document(text, candidate_labels):
-    result = classifier(text, candidate_labels)
-    return result['labels'][0]
-
 def structure_text(text):
     doc = nlp(text)
     
     structured_data = {
-        "sentences": [],
-        "words": [],
         "entities": [],
+        "sentences": [],
         "keywords": [],
         "word_count": len(doc),
         "sentence_count": len(list(doc.sents)),
     }
-    
-    for sent in doc.sents:
-        structured_data["sentences"].append(clean_text(sent.text))
-    
-    for token in doc:
-        if not token.is_stop and token.is_alpha:
-            structured_data["words"].append(token.text.lower())
     
     for ent in doc.ents:
         structured_data["entities"].append({
             "text": clean_text(ent.text),
             "label": ent.label_
         })
+    
+    for sent in doc.sents:
+        structured_data["sentences"].append(clean_text(sent.text))
     
     keywords = [clean_text(chunk.root.lemma_) for chunk in doc.noun_chunks]
     structured_data["keywords"] = list(set(keywords))
@@ -56,8 +40,6 @@ def structure_text(text):
 def apply_template(data, template):
     if template == "data_only":
         return {
-            "sentences": data["sentences"],
-            "words": data["words"],
             "entities": data["entities"],
             "keywords": data["keywords"]
         }
@@ -69,17 +51,10 @@ def apply_template(data, template):
             "keyword_count": len(data["keywords"])
         }
     elif template == "specific_entities":
-         return {
+        return {
             "persons": [ent["text"] for ent in data["entities"] if ent["label"] == "PERSON"],
             "organizations": [ent["text"] for ent in data["entities"] if ent["label"] == "ORG"],
-            "locations": [ent["text"] for ent in data["entities"] if ent["label"] in ["GPE", "LOC"]],
-            "dates": [ent["text"] for ent in data["entities"] if ent["label"] == "DATE"],
-            "money": [ent["text"] for ent in data["entities"] if ent["label"] == "MONEY"],
-            "percent": [ent["text"] for ent in data["entities"] if ent["label"] == "PERCENT"],
-            "time": [ent["text"] for ent in data["entities"] if ent["label"] == "TIME"],
-            "quantity": [ent["text"] for ent in data["entities"] if ent["label"] == "QUANTITY"],
-            "ordinal": [ent["text"] for ent in data["entities"] if ent["label"] == "ORDINAL"],
-            "cardinal": [ent["text"] for ent in data["entities"] if ent["label"] == "CARDINAL"]
+            "locations": [ent["text"] for ent in data["entities"] if ent["label"] in ["GPE", "LOC"]]
         }
     else:
         return data
@@ -95,18 +70,6 @@ def extract_custom_fields(structured_data, fields):
             result[field] = [ent["text"] for ent in structured_data["entities"] if ent["label"] in ["GPE", "LOC"]]
         elif field == "dates":
             result[field] = [ent["text"] for ent in structured_data["entities"] if ent["label"] == "DATE"]
-        elif field == "money":
-            result[field] = [ent["text"] for ent in structured_data["entities"] if ent["label"] == "MONEY"]
-        elif field == "percent":
-            result[field] = [ent["text"] for ent in structured_data["entities"] if ent["label"] == "PERCENT"]
-        elif field == "time":
-            result[field] = [ent["text"] for ent in structured_data["entities"] if ent["label"] == "TIME"]
-        elif field == "quantity":
-            result[field] = [ent["text"] for ent in structured_data["entities"] if ent["label"] == "QUANTITY"]
-        elif field == "ordinal":
-            result[field] = [ent["text"] for ent in structured_data["entities"] if ent["label"] == "ORDINAL"]
-        elif field == "cardinal":
-            result[field] = [ent["text"] for ent in structured_data["entities"] if ent["label"] == "CARDINAL"]
     return result
 
 def analyze_document(structured_data, full_text):
@@ -125,14 +88,7 @@ def analyze_document(structured_data, full_text):
     return analytics
 
 def generate_json_output(data):
-    ordered_data = {
-        "sentences": data["sentences"],
-        "words": data["words"],
-        "entities": data["entities"],
-        "keywords": data["keywords"],
-        "analytics": data["analytics"]
-    }
-    return json.dumps(ordered_data, indent=2, ensure_ascii=False)
+    return json.dumps(data, indent=2, ensure_ascii=False)
 
 def generate_xml_output(data):
     def dict_to_xml(tag, d):
@@ -156,7 +112,7 @@ def generate_xml_output(data):
     xml_str = minidom.parseString(ET.tostring(root, encoding='unicode')).toprettyxml(indent="  ")
     return xml_str
 
-def process_document(extracted_text, template=None, custom_fields=None, candidate_labels=None):
+def process_document(extracted_text, template=None, custom_fields=None):
     warnings = []
     
     # Always process the full structured data
@@ -173,10 +129,6 @@ def process_document(extracted_text, template=None, custom_fields=None, candidat
     
     # Always include analytics in the output
     output_data['analytics'] = full_analytics
-    
-    # Classify document if candidate labels are provided
-    if candidate_labels:
-        output_data['classification'] = classify_document(extracted_text, candidate_labels)
     
     # Check for null or zero values in the output data
     for key, value in output_data.items():

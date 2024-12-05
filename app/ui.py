@@ -11,6 +11,8 @@ from PIL import Image
 import io
 import requests
 import os
+import jwt
+import datetime
 
 # Function to calculate file sizes
 def calculate_file_sizes(uploaded_file, result):
@@ -51,6 +53,7 @@ def setup_page():
         "Upload Document and Processing": document_processing_page,
         "Saved Documents Storage": saved_documents_page,
         "Chat Interface": chat_interface_page,
+        "API Token and Upload": api_token_page,
     }
     page = st.sidebar.radio("Navigate", list(pages.keys()))
     pages[page]()
@@ -119,25 +122,34 @@ def home_page():
 def document_processing_page():
     st.title("🔄 Document Processing")
     
-    uploaded_file = upload_document()
+    # Add a toggle for scanned document processing
+    processing_mode = st.radio(
+        "Select Document Type", 
+        ["Regular Document", "Scanned Document (OCR)"]
+    )
+    
+    # Determine upload type based on processing mode
+    is_scanned = processing_mode == "Scanned Document (OCR)"
+    uploaded_file = upload_document(allow_scanned=is_scanned)
+    
     template = st.selectbox(
         "Choose a template for extraction",
         ["Default", "Data Only", "Analytics Only", "Specific Entities"],
         help="Select a predefined template for structuring the output."
     )
     custom_fields = st.multiselect(
-        "Select custom fields to extract",
-        ["Persons", "Organizations", "Locations", "Dates"],
-        help="Choose specific entity types you want to extract from the document."
-    )
+    "Select specific information to extract:",
+    ["Persons", "Organizations", "Locations", "Dates", "Money", "Percent", "Time", "Quantity", "Ordinal", "Cardinal"],
+    help="Choose specific entity types you want to extract from the document."
+)
     
     result = None
     if uploaded_file is not None:
         with st.spinner("Processing document..."):
             try:
                 # Validate and extract text from the document
-                file_type = validate_document(uploaded_file)
-                extracted_text = extract_text(uploaded_file, file_type)
+                file_type = validate_document(uploaded_file, is_scanned)
+                extracted_text = extract_text(uploaded_file, file_type, is_scanned)
                 
                 # Process the document with selected template and custom fields
                 template = template.lower().replace(" ", "_") if template != "Default" else None
@@ -163,16 +175,23 @@ def document_processing_page():
         display_database_options(st.session_state.result, uploaded_file.name)
 
 # Function to handle document upload
-def upload_document():
+def upload_document(allow_scanned=False):
     st.subheader("📤 Upload Document")
     if 'uploaded_file' not in st.session_state:
         st.session_state.uploaded_file = None
     
-    uploaded_file = st.file_uploader("Choose a file", type=["pdf", "docx", "txt", "xlsx"])
+    # Different file uploaders based on scanned option
+    if not allow_scanned:
+        uploaded_file = st.file_uploader("Choose a file", type=["pdf", "docx", "txt", "xlsx"])
+        is_scanned = False
+    else:
+        uploaded_file = st.file_uploader("Choose a scanned document", type=["pdf"])
+        is_scanned = True
     
     if uploaded_file is not None:
         st.session_state.uploaded_file = uploaded_file
-        st.info(f"File '{uploaded_file.name}' uploaded successfully. Choose a template and custom fields for extraction.")
+        st.session_state.is_scanned = is_scanned
+        st.info(f"File '{uploaded_file.name}' uploaded successfully.")
     
     return st.session_state.uploaded_file
 
@@ -372,6 +391,74 @@ def chat_interface_page():
         st.session_state["chat_history"] = []
         st.success("Chat history cleared!")
 
+
+import pyperclip
+
+# Function to handle API token generation and management
+def api_token_page():
+    st.title("🔑 API Token and Upload")
+    st.info("Generate API tokens and use them to upload and process documents via API. You can use these tokens with tools like Postman or other websites.")
+
+    # Initialize session state for tokens
+    if 'tokens' not in st.session_state:
+        st.session_state.tokens = []
+
+    # Generate API token
+    if st.button("Generate API Token"):
+        token = jwt.encode({'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, 'a_very_strong_secret_key_that_should_be_kept_private', algorithm="HS256")
+        st.session_state.tokens.append(token)
+
+    # Display tokens in a table with aligned buttons
+    if st.session_state.tokens:
+        st.subheader("Generated API Tokens")
+        for i, token in enumerate(st.session_state.tokens):
+            cols = st.columns([4, 1, 1, 1])
+            with cols[0]:
+                st.text_input(f"Token {i+1}", token, key=f"token_{i}", type="password", label_visibility="collapsed")
+            with cols[1]:
+                if st.button("📋 Copy", key=f"copy_{i}"):
+                    pyperclip.copy(token)
+                    st.success(f"Token {i+1} copied to clipboard!")
+            with cols[2]:
+                if st.button("❌ Delete", key=f"delete_{i}"):
+                    st.session_state.tokens.pop(i)
+                    st.experimental_rerun()
+            with cols[3]:
+                if st.button("📊 Stats", key=f"stats_{i}"):
+                    try:
+                        response = requests.get("http://localhost:8000/api/stats")
+                        if response.status_code == 200:
+                            stats = response.json()
+                            st.write(f"Total Requests: {stats['request_count']}")
+                            st.write(f"Average Latency: {stats['average_latency']:.2f} seconds")
+                        else:
+                            st.error(f"Error: {response.json().get('detail', 'Unknown error')}")
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+
+    # Upload file using API token
+    uploaded_file = st.file_uploader("Choose a file to upload via API", type=["pdf", "docx", "txt", "xlsx"])
+    api_token = st.text_input("Enter your API token")
+
+    if uploaded_file and api_token:
+        if st.button("Upload and Process via API"):
+            try:
+                headers = {'Authorization': f'Bearer {api_token}'}
+                # Properly format the file upload
+                files = {
+                    'file': (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)
+                }
+                response = requests.post("http://localhost:8000/api/upload", headers=headers, files=files)
+                if response.status_code == 200:
+                    st.success("Document processed successfully!")
+                    st.json(response.json())
+                else:
+                    st.error(f"Error: {response.json().get('detail', 'Unknown error')}")
+            except Exception as e:
+                st.error(f"Error: {str(e)}")
+
+
+            
 # Main function to run the Streamlit app
 def main():
     setup_page()

@@ -113,3 +113,133 @@ Transformo Docs is an open-source project aimed at making document management ea
 - Include the `requirements.txt` file with the necessary dependencies.
 - If the app has specific setup instructions or additional configuration, mention those in the "Installation" section.
 - The "Customization" section explains how to switch to different models, which is essential for flexibility in deployment.
+
+
+
+### 1. Overall Application Architecture
+
+The application is a document processing tool built with Streamlit, designed to:
+- Upload various document types
+- Extract and structure text
+- Perform advanced text analytics
+- Save processed documents
+- Provide a chat interface
+
+The application consists of five main Python modules:
+1. `main.py`: Entry point of the application
+2. `ui.py`: Handles the Streamlit user interface
+3. `extractor.py`: Extracts text from different document types
+4. `processor.py`: Performs text analysis and structuring
+5. `database.py`: Manages document storage
+
+### 2. Detailed Flow
+
+#### `main.py`
+- Simplest file
+- Calls the `ui_main()` function from `ui.py` when the script is run
+
+#### `extractor.py`
+1. `validate_document()`:
+   - Checks if uploaded file type is allowed
+   - Supports PDF, Word, TXT, Excel files
+
+2. `extract_text()`:
+   - Extracts text from different document types
+   - Uses different libraries based on file type:
+     - PyPDF2 for PDFs
+     - python-docx for Word documents
+     - pandas for Excel files
+     - Standard file reading for text files
+
+#### `processor.py`
+1. Uses spaCy for natural language processing
+2. `structure_text()`:
+   - Processes extracted text
+   - Identifies:
+     - Named entities
+     - Sentences
+     - Keywords
+     - Word count
+     - Sentence count
+
+3. `analyze_document()`:
+   - Generates advanced analytics
+   - Computes:
+     - Average sentence length
+     - Most common entities
+     - Most common words
+
+4. `process_document()`:
+   - Main processing function
+   - Supports various output templates
+   - Generates JSON and XML outputs
+   - Includes warnings for empty or null data
+
+#### `database.py`
+1. `save_to_database()`:
+   - Saves processed documents locally
+   - Generates unique document ID
+   - Stores metadata and processed data
+
+2. `get_saved_documents()`:
+   - Retrieves all saved documents
+   - Handles potential file corruption
+
+3. `delete_document()`:
+   - Removes a specific document from storage
+
+#### `ui.py`
+Handles the entire Streamlit interface with multiple pages:
+
+1. Home Page:
+   - Introduces the application
+   - Explains key features
+
+2. Document Processing Page:
+   - Document upload
+   - Template and custom field selection
+   - Text extraction
+   - Document processing
+   - Export options
+   - Analytics display
+   - Visualizations
+   - Database storage options
+
+3. Saved Documents Page:
+   - Lists processed documents
+   - Allows preview, download, and deletion
+
+4. Chat Interface Page:
+   - Allows questions about processed documents
+   - Maintains chat history
+
+### 3. Processing Workflow
+
+When a user uploads a document:
+1. File is validated
+2. Text is extracted
+3. Text is processed and structured
+4. Analytics are generated
+5. Output is generated in JSON/XML
+6. Visualizations are created
+7. Document can be saved or exported
+
+### 4. Key Technologies Used
+- Streamlit (UI)
+- spaCy (NLP)
+- PyPDF2 (PDF extraction)
+- python-docx (Word extraction)
+- pandas (Data handling)
+- Plotly (Visualizations)
+- UUID (Unique identifiers)
+- logging (Error tracking)
+
+### 5. Unique Features
+- Multi-format document support
+- Advanced text analytics
+- Customizable extraction templates
+- Local document storage
+- Interactive visualizations
+- Basic document chat interface
+
+The application provides a comprehensive solution for extracting, analyzing, and managing document information with a user-friendly interface.
