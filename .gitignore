@@ -2,3 +2,13 @@ __pycache__/
 /app/test.ipynb
 /app/test_ocr.ipynb
 /app/test_files/
+/app/local_storage/*
+app/12th HSC.pdf
+app/21CS3067_Vivek Rai_MC Assignment 2_.pdf
+app/1000106232.pdf
+app/Class_8.pdf
+app/IBLR241100148089.pdf
+app/test_a.pdf
+app/test_b.pdf
+app/transformodocs.db
+.vscode/settings.json
