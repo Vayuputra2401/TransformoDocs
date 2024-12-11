@@ -12,6 +12,8 @@ import fitz  # PyMuPDF
 import pytesseract
 from PIL import Image
 from pdf2image import convert_from_path
+TESSERACT_CMD = r"C:/Program Files/Tesseract-OCR/tesseract.exe" 
+pytesseract.pytesseract.tesseract_cmd = TESSERACT_CMD
 
 
 def is_scanned_pdf(file):
@@ -80,6 +82,7 @@ def pdf_to_text(pdf_path):
     Returns:
         str: Extracted text from the PDF.
     """
+    print(pdf_path)
     doc = fitz.open(pdf_path)
     text = ""
     
