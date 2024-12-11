@@ -22,6 +22,7 @@ total_latency = 0
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def verify_token(token: str = Depends(oauth2_scheme)):
     try:
         jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -30,6 +31,7 @@ def verify_token(token: str = Depends(oauth2_scheme)):
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
+
 class DocumentResponse(BaseModel):
     structured_data: dict
     analytics: dict
@@ -37,6 +39,7 @@ class DocumentResponse(BaseModel):
     xml_output: str
     extracted_text: str
     warnings: list
+
 
 # Custom file-like object with name attribute
 class NamedBytesIO(io.BytesIO):
@@ -47,17 +50,20 @@ class NamedBytesIO(io.BytesIO):
     @property
     def name(self):
         return self._name
-    
+
     @property
     def size(self):
         return len(self.getvalue())
 
+
 @app.post("/api/upload", response_model=DocumentResponse)
-async def upload_document(file: UploadFile = File(...), token: str = Depends(verify_token)):
+async def upload_document(
+    file: UploadFile = File(...), token: str = Depends(verify_token)
+):
     global request_count, total_latency
     start_time = time.time()
     try:
-        
+
         # Read file content
         file_content = await file.read()
 
@@ -65,16 +71,18 @@ async def upload_document(file: UploadFile = File(...), token: str = Depends(ver
         original_filename = file.filename or "uploaded_file"
         if original_filename == "file":
             # Safely handle content_type
-            content_type = file.content_type.split("/")[-1] if file.content_type else "unknown"
+            content_type = (
+                file.content_type.split("/")[-1] if file.content_type else "unknown"
+            )
             extension = f".{content_type}" if content_type != "unknown" else ".bin"
             original_filename = f"uploaded_{int(time.time())}{extension}"
 
-        logger.info(f"Received file: {original_filename}, size: {len(file_content)} bytes")
-        
+        logger.info(
+            f"Received file: {original_filename}, size: {len(file_content)} bytes"
+        )
+
         # Wrap file content in NamedBytesIO
         named_file = NamedBytesIO(file_content, original_filename)
-        
-        
 
         # Validate file type
         logger.info(f"Validating file: {named_file.name}")
@@ -93,21 +101,27 @@ async def upload_document(file: UploadFile = File(...), token: str = Depends(ver
         logger.info("Document processed successfully")
 
         request_count += 1
-        total_latency += (time.time() - start_time)
+        total_latency += time.time() - start_time
 
         return result
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/token")
 async def generate_token():
     try:
-        token = jwt.encode({'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=24)}, SECRET_KEY, algorithm="HS256")
+        token = jwt.encode(
+            {"exp": datetime.datetime.utcnow() + datetime.timedelta(hours=24)},
+            SECRET_KEY,
+            algorithm="HS256",
+        )
         return {"token": token}
     except Exception as e:
         logger.error(f"Error generating token: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/stats")
 async def get_stats():
