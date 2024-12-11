@@ -8,6 +8,11 @@ import pytesseract
 from PIL import Image
 import cv2
 import numpy as np
+import fitz  # PyMuPDF
+import pytesseract
+from PIL import Image
+from pdf2image import convert_from_path
+
 
 def is_scanned_pdf(file):
     """
@@ -65,35 +70,79 @@ def preprocess_scanned_image(image):
     
     return rotated
 
-def extract_text_from_scanned_pdf(file):
+def pdf_to_text(pdf_path):
     """
-    Extract text from scanned PDF using OCR
+    Extract text from a PDF using PyMuPDF (fitz).
+    
+    Args:
+        pdf_path (str): Path to the PDF file.
+        
+    Returns:
+        str: Extracted text from the PDF.
     """
+    doc = fitz.open(pdf_path)
+    text = ""
+    
+    # Iterate through each page in the PDF
+    for page_num in range(doc.page_count):
+        page = doc.load_page(page_num)  # Get page
+        text += page.get_text("text")  # Extract text
+        
+    return text.strip()
+
+def pdf_to_ocr_text(pdf_path):
+    """
+    Perform OCR on a PDF containing images (using PyMuPDF to extract images and Tesseract).
+    
+    Args:
+        pdf_path (str): Path to the PDF file.
+        
+    Returns:
+        str: Extracted text from the PDF.
+    """
+    extracted_text = ""
+    
     try:
-        # Convert PDF to images
-        pdf_reader = PyPDF2.PdfReader(file)
-        full_text = ""
+        # Open the PDF with PyMuPDF
+        doc = fitz.open(pdf_path)
         
-        for page in pdf_reader.pages:
-            # Convert page to image
-            page_image = page.to_image(resolution=300)
+        # Process each page
+        for page_num in range(doc.page_count):
+            page = doc.load_page(page_num)
             
-            # Convert to PIL Image
-            img = Image.open(io.BytesIO(page_image.original_bytes))
+            # Extract images from the page (if any)
+            image_list = page.get_images(full=True)
             
-            # Preprocess image
-            preprocessed_img = preprocess_scanned_image(img)
+            for img_index, img in enumerate(image_list):
+                xref = img[0]
+                image = doc.extract_image(xref)
+                img_data = image["image"]
+                
+                # Convert the image data into a PIL image
+                pil_image = Image.open(io.BytesIO(img_data))
+                
+                # Perform OCR on the image using Tesseract
+                text = pytesseract.image_to_string(pil_image, lang='eng')
+                extracted_text += f"\n--- Page {page_num + 1}, Image {img_index + 1} ---\n{text}"
             
-            # Convert back to PIL Image for Tesseract
-            ocr_image = Image.fromarray(preprocessed_img)
-            
-            # Perform OCR
-            page_text = pytesseract.image_to_string(ocr_image)
-            full_text += page_text + "\n"
-        
-        return full_text.strip()
     except Exception as e:
-        raise ValueError(f"OCR processing failed: {str(e)}")
+        print(f"Error processing PDF: {e}")
+        return None
+
+    return extracted_text.strip()
+
+def extract_text_from_scanned_pdf(pdf_path):
+    # First try extracting text using PyMuPDF (for text-based PDFs)
+    print("Extracting text from PDF...")
+    text = pdf_to_text(pdf_path)
+    
+    if text.strip():  # If text extraction works
+        print("Text extracted successfully using PyMuPDF.")
+        return text
+    else:
+        # If no text found, fall back to OCR on images
+        print("No text found. Falling back to OCR on images.")
+        return pdf_to_ocr_text(pdf_path)
 
 def validate_document(file, is_scanned=False):
     """
@@ -108,9 +157,9 @@ def validate_document(file, is_scanned=False):
         raise ValueError(f"Unsupported file type: {file_type}")
     
     # Additional check for scanned PDFs
-    if file_type == 'application/pdf' and is_scanned:
-        if not is_scanned_pdf(file):
-            raise ValueError("The uploaded PDF does not appear to be a scanned document.")
+    # if file_type == 'application/pdf' and is_scanned:
+    #     if not is_scanned_pdf(file):
+    #         raise ValueError("The uploaded PDF does not appear to be a scanned document.")
     
     return file_type
 
