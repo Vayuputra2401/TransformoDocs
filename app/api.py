@@ -31,15 +31,19 @@ client_requests: Dict[str, list] = defaultdict(list)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def create_access_token(data: dict, expires_delta: datetime.timedelta = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.datetime.utcnow() + expires_delta
     else:
-        expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.datetime.utcnow() + datetime.timedelta(
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 def verify_token(token: str = Depends(oauth2_scheme)):
     try:
@@ -49,6 +53,7 @@ def verify_token(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
 
 def rate_limiter(client_id: str):
     current_time = time.time()
@@ -63,6 +68,7 @@ def rate_limiter(client_id: str):
 
     request_times.append(current_time)
 
+
 class DocumentResponse(BaseModel):
     structured_data: dict
     analytics: dict
@@ -70,6 +76,7 @@ class DocumentResponse(BaseModel):
     xml_output: str
     extracted_text: str
     warnings: list
+
 
 # Custom file-like object with name attribute
 class NamedBytesIO(io.BytesIO):
@@ -85,11 +92,10 @@ class NamedBytesIO(io.BytesIO):
     def size(self):
         return len(self.getvalue())
 
+
 @app.post("/api/upload", response_model=DocumentResponse)
 async def upload_document(
-    request: Request ,
-    file: UploadFile = File(...), 
-    token: str = Depends(verify_token)
+    request: Request, file: UploadFile = File(...), token: str = Depends(verify_token)
 ):
     global request_count, total_latency
     start_time = time.time()
@@ -140,13 +146,16 @@ async def upload_document(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/token")
 async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
     try:
         # Here you should verify the username and password
         # For demonstration, we assume the username is "user" and password is "password"
         if form_data.username == "user" and form_data.password == "password":
-            access_token_expires = datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+            access_token_expires = datetime.timedelta(
+                minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+            )
             access_token = create_access_token(
                 data={"sub": form_data.username}, expires_delta=access_token_expires
             )
@@ -156,6 +165,7 @@ async def generate_token(form_data: OAuth2PasswordRequestForm = Depends()):
     except Exception as e:
         logger.error(f"Error generating token: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/stats")
 async def get_stats(token: str = Depends(verify_token)):

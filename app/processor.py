@@ -19,36 +19,56 @@ classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnl
 # Define extraction fields
 extraction_fields = [
     # Identification
-    'full_name', 'first_name', 'last_name', 'middle_name', 
-    'date_of_birth', 'gender', 'nationality', 
-    'passport_number', 'social_security_number',
-    
+    "full_name",
+    "first_name",
+    "last_name",
+    "middle_name",
+    "date_of_birth",
+    "gender",
+    "nationality",
+    "passport_number",
+    "social_security_number",
     # Contact Information
-    'email', 'phone_number', 'mobile_number', 
-    'home_address', 'work_address', 
-    
+    "email",
+    "phone_number",
+    "mobile_number",
+    "home_address",
+    "work_address",
     # Educational Details
-    'institution_name', 'degree', 'major', 
-    'graduation_year', 'gpa', 'student_id',
-    
+    "institution_name",
+    "degree",
+    "major",
+    "graduation_year",
+    "gpa",
+    "student_id",
     # Professional Details
-    'job_title', 'company_name', 'department', 
-    'employee_id', 'work_email',
-    
+    "job_title",
+    "company_name",
+    "department",
+    "employee_id",
+    "work_email",
     # Financial Information
-    'bank_name', 'account_number', 'routing_number', 
-    'credit_card_number', 'tax_id', 'annual_income',
-    
+    "bank_name",
+    "account_number",
+    "routing_number",
+    "credit_card_number",
+    "tax_id",
+    "annual_income",
     # Document Specifics
-    'document_type', 'document_number', 
-    'issue_date', 'expiration_date', 'issuing_authority',
-    
+    "document_type",
+    "document_number",
+    "issue_date",
+    "expiration_date",
+    "issuing_authority",
     # Additional Identifiers
-    'registration_number', 'serial_number',
-    
+    "registration_number",
+    "serial_number",
     # Verification Details
-    'signature_present', 'photo_id_match', 'document_authenticity'
+    "signature_present",
+    "photo_id_match",
+    "document_authenticity",
 ]
+
 
 def clean_text(text):
     text = "".join(char for char in text if char.isprintable())
@@ -84,7 +104,6 @@ def structure_text(text):
         structured_data["entities"].append(
             {"text": clean_text(ent.text), "label": ent.label_}
         )
-    
 
     keywords = [clean_text(chunk.root.lemma_) for chunk in doc.noun_chunks]
     structured_data["keywords"] = list(set(keywords))
