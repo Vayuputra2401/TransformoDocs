@@ -32,6 +32,7 @@ import base64
 import pandas as pd
 from io import BytesIO
 from docx import Document
+from llm import EnhancedJSONAgent
 
 
 # Function to calculate file sizes
@@ -592,7 +593,7 @@ def home_page():
         f"""
     <div class="feature-container">
         <div class="feature-text">
-            <h3 style="color: white;">🤖 AI-Powered Insights</h3>
+            <h3 style="color: white;">AI-Powered Insights</h3>
             <ul style="color: white;">
                 <li> Intelligent Document Processing</li>
                 <li> Smart Content Extraction</li>
@@ -770,7 +771,7 @@ def upload_document(allow_scanned=False):
 
 # Function to display export options
 def display_export_options(result, uploaded_file):
-    st.subheader("💾 Export Options")
+    st.subheader("Export Options")
     export_format = st.selectbox("Choose export format", ["JSON", "XML"])
 
     if export_format == "JSON":
@@ -873,7 +874,7 @@ def display_analytics(result):
 
 # Function to display graphs
 def display_graphs(result, uploaded_file):
-    st.subheader("📈 Visualizations")
+    st.subheader("Visualizations")
     col1, col2 = st.columns(2)
 
     with col1:
@@ -987,13 +988,13 @@ def display_graphs(result, uploaded_file):
                 name="Original Size",
                 x=["Document Size"],
                 y=[original_size],
-                marker=dict(color="rgb(0,111,60)"),
+                marker=dict(color="rgb(77,162,132)"),
             ),
             go.Bar(
                 name="Extracted Size",
                 x=["Document Size"],
                 y=[extracted_size],
-                marker=dict(color="rgb(204,255,140)"),
+                marker=dict(color="rgb(196,230,195)"),
             ),
         ]
     )
@@ -1003,7 +1004,7 @@ def display_graphs(result, uploaded_file):
     st.info(f"Size reduction: {size_diff:.2f} MB ({size_diff_percentage:.2f}%)")
 
     # Keyword Information
-    st.subheader("🔑 Keyword Information")
+    st.subheader("Keyword Information")
     st.write(f"**Total Keywords:** {result['analytics']['keyword_count']}")
     st.write("**Top Keywords:**")
     keyword_data = pd.DataFrame(
@@ -1014,7 +1015,7 @@ def display_graphs(result, uploaded_file):
 
 # Function to display database options
 def display_database_options(result, filename):
-    st.subheader("💽 Database Options")
+    st.subheader("Database Options")
     st.info(
         "Choose a database to save the processed document. Currently, only local storage is available."
     )
@@ -1104,20 +1105,15 @@ def saved_documents_page():
 
 # Function for chat interface page
 import json
-from llm import EnhancedJSONAgent
+
 
 def chat_interface_page():
     st.markdown(
         """
-    <style>
-    .content {
-        margin-top: 500px;
-    </style>
-    """,
+        <h1 style='text-align: center; opacity:0.8; margin-top: 50px; font-size: 5rem;'>Chat with Your Document</h1>
+        """,
         unsafe_allow_html=True,
     )
-    st.title("💬 Chat with Your Document")
-    st.info("This feature allows you to ask questions about your processed documents.")
 
     documents = get_saved_documents()
     if not documents:
@@ -1145,7 +1141,7 @@ def chat_interface_page():
     user_query = st.text_input("Ask a question about the document:")
 
     if user_query:
-        with st.spinner('Processing your query...'):
+        with st.spinner("Processing your query..."):
             try:
                 answer = agent.process_query(user_query)
 
@@ -1161,7 +1157,7 @@ def chat_interface_page():
                 st.warning(f"Error processing query: {e}")
 
     if st.session_state["chat_history"]:
-        st.write("### 🗨️ Chat History")
+        st.write("### Chat History")
         for chat in st.session_state["chat_history"]:
             st.markdown(f"**You:** {chat['question']}")
             st.markdown(f"**Transformo Docs:** {chat['answer']}")
@@ -1171,14 +1167,14 @@ def chat_interface_page():
         st.success("Chat history cleared!")
 
 
-
 # Function to handle API token generation and management
 def api_token_page():
-    st.title("🔑 API Token and Upload")
-    st.info(
-        "Generate API tokens and use them to upload and process documents via API. You can use these tokens with tools like Postman or other websites."
+    st.markdown(
+        """
+        <h1 style='text-align: center; opacity:0.8; margin-top: 50px; font-size: 5rem;'>API Token and Upload</h1>
+        """,
+        unsafe_allow_html=True,
     )
-
     # Initialize session state for tokens
     if "tokens" not in st.session_state:
         st.session_state.tokens = []
@@ -1206,15 +1202,15 @@ def api_token_page():
                     label_visibility="collapsed",
                 )
             with cols[1]:
-                if st.button("📋 Copy", key=f"copy_{i}"):
+                if st.button(" Copy", key=f"copy_{i}"):
                     pyperclip.copy(token)
                     st.success(f"Token {i+1} copied to clipboard!")
             with cols[2]:
-                if st.button("❌ Delete", key=f"delete_{i}"):
+                if st.button(" Delete", key=f"delete_{i}"):
                     st.session_state.tokens.pop(i)
                     st.experimental_rerun()
             with cols[3]:
-                if st.button("📊 Stats", key=f"stats_{i}"):
+                if st.button(" Stats", key=f"stats_{i}"):
                     try:
                         response = requests.get("http://localhost:8000/api/stats")
                         if response.status_code == 200:

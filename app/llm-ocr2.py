@@ -10,10 +10,11 @@ import json
 import re
 from transformers import T5Tokenizer, T5ForConditionalGeneration
 
+
 class LLMDocumentProcessor:
     def __init__(self):
         # Initialize easyocr reader
-        self.reader = easyocr.Reader(['en'])
+        self.reader = easyocr.Reader(["en"])
 
         # Initialize T5 model and tokenizer for structured extraction
         self.t5_tokenizer = T5Tokenizer.from_pretrained("google/t5-base")
@@ -21,9 +22,18 @@ class LLMDocumentProcessor:
 
         # Comprehensive extraction fields
         self.extraction_fields = [
-            'full_name', 'date_of_birth', 'gender', 'email', 'phone_number',
-            'home_address', 'job_title', 'company_name', 'document_type',
-            'document_number', 'issue_date', 'expiration_date'
+            "full_name",
+            "date_of_birth",
+            "gender",
+            "email",
+            "phone_number",
+            "home_address",
+            "job_title",
+            "company_name",
+            "document_type",
+            "document_number",
+            "issue_date",
+            "expiration_date",
         ]
 
     def convert_pdf_to_images(self, pdf_file):
@@ -33,7 +43,9 @@ class LLMDocumentProcessor:
             for page_num in range(len(pdf_document)):
                 page = pdf_document[page_num]
                 pixmap = page.get_pixmap(dpi=300)
-                image = Image.frombytes("RGB", [pixmap.width, pixmap.height], pixmap.samples)
+                image = Image.frombytes(
+                    "RGB", [pixmap.width, pixmap.height], pixmap.samples
+                )
                 images.append(image)
             return images
         except Exception as e:
@@ -53,10 +65,16 @@ class LLMDocumentProcessor:
         try:
             prompt = f"Extract the following fields from the text and provide as JSON: {', '.join(self.extraction_fields)}. Text: {text}"
 
-            inputs = self.t5_tokenizer(prompt, return_tensors="pt", max_length=512, truncation=True)
-            outputs = self.t5_model.generate(**inputs, max_length=512, num_beams=4, early_stopping=True)
+            inputs = self.t5_tokenizer(
+                prompt, return_tensors="pt", max_length=512, truncation=True
+            )
+            outputs = self.t5_model.generate(
+                **inputs, max_length=512, num_beams=4, early_stopping=True
+            )
 
-            generated_text = self.t5_tokenizer.decode(outputs[0], skip_special_tokens=True)
+            generated_text = self.t5_tokenizer.decode(
+                outputs[0], skip_special_tokens=True
+            )
             structured_data = json.loads(generated_text)  # Parse into a dictionary
 
             return structured_data
@@ -77,21 +95,22 @@ class LLMDocumentProcessor:
             st.error(f"Information extraction error: {e}")
             return None
 
+
 def main():
     st.set_page_config(page_title="Document Information Extractor", layout="wide")
 
     st.title("\U0001F9E0 Document Information Extraction")
 
     uploaded_file = st.file_uploader(
-        "\U0001F4E4 Upload Document", 
-        type=['png', 'jpg', 'jpeg', 'pdf'],
-        help="Upload a document image or PDF for advanced information extraction"
+        "\U0001F4E4 Upload Document",
+        type=["png", "jpg", "jpeg", "pdf"],
+        help="Upload a document image or PDF for advanced information extraction",
     )
 
     if uploaded_file is not None:
         processor = LLMDocumentProcessor()
 
-        if uploaded_file.type == 'application/pdf':
+        if uploaded_file.type == "application/pdf":
             images = processor.convert_pdf_to_images(uploaded_file)
         else:
             images = [Image.open(uploaded_file)]
@@ -110,11 +129,15 @@ def main():
 
                 if extracted_text:
                     st.subheader("\U0001F4C4 Extracted Text")
-                    st.text_area(f"OCR Result - Page {page_num}", extracted_text, height=200)
+                    st.text_area(
+                        f"OCR Result - Page {page_num}", extracted_text, height=200
+                    )
 
                 with st.spinner("\U0001F9E9 Extracting Structured Information..."):
                     if extracted_text:
-                        result = processor.extract_structured_information(image, extracted_text)
+                        result = processor.extract_structured_information(
+                            image, extracted_text
+                        )
                     else:
                         result = None
 
@@ -127,10 +150,11 @@ def main():
                         label="\U0001F4E5 Download Extracted Data",
                         data=json_string,
                         file_name=f"document_extraction_page_{page_num}.json",
-                        mime="application/json"
+                        mime="application/json",
                     )
                 else:
                     st.error("\u274C Failed to extract information")
+
 
 if __name__ == "__main__":
     main()
