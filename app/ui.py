@@ -35,30 +35,31 @@ from docx import Document
 from llm import EnhancedJSONAgent
 
 # Load user data
-user_data = pd.read_excel('employees.xlsx')  # Excel file containing user information
+user_data = pd.read_excel("employees.xlsx")  # Excel file containing user information
 
 
 # Function to generate JWT token
 def generate_token(username, role):
     payload = {
-        'username': username,
-        'role': role,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        "username": username,
+        "role": role,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
     }
-    token = jwt.encode(payload, 'secret_key', algorithm='HS256')
+    token = jwt.encode(payload, "secret_key", algorithm="HS256")
     return token
+
 
 # Function to verify JWT token
 def verify_token(token):
     try:
-        payload = jwt.decode(token, 'secret_key', algorithms=['HS256'])
+        payload = jwt.decode(token, "secret_key", algorithms=["HS256"])
         return payload
     except jwt.ExpiredSignatureError:
         return None
     except jwt.InvalidTokenError:
         return None
-    
-    
+
+
 # Function to authenticate user using passcode
 def authenticate_user():
     st.title("Passcode Authentication")
@@ -68,27 +69,32 @@ def authenticate_user():
     passcode = st.text_input("Passcode", type="password")
 
     if st.button("Login"):
-        user_info = user_data[user_data['username'] == username]
+        user_info = user_data[user_data["username"] == username]
         if not user_info.empty:
-            role = user_info.iloc[0]['role']
-            token = generate_token(username, role)
-            st.success(f"Authentication successful! Welcome, {username}")
-            st.write(f"Your role: {role}")
-            st.write(f"Your token: {token}")
-            st.session_state['token'] = token
-            return
+            stored_passcode = user_info.iloc[0]["passcode"]
+            if str(passcode) == str(stored_passcode):
+                role = user_info.iloc[0]["role"]
+                token = generate_token(username, role)
+                st.success(f"Authentication successful! Welcome, {username}")
+                st.write(f"Your role: {role}")
+                st.write(f"Your token: {token}")
+                st.session_state["token"] = token
+            else:
+                st.error("Invalid passcode. Please try again.")
         else:
             st.error("Invalid username or passcode. Please try again.")
-    
+
+
 # Function to check user role
 def check_role(required_role):
-    token = st.session_state.get('token')
+    token = st.session_state.get("token")
     if token:
         payload = verify_token(token)
-        if payload and payload['role'] == required_role:
+        if payload and payload["role"] == required_role:
             return True
     return False
-                
+
+
 # Function to calculate file sizes
 def calculate_file_sizes(uploaded_file, result):
     original_size_mb = uploaded_file.size / (1024 * 1024)
@@ -423,10 +429,12 @@ def setup_page():
     # Render the selected page
     PAGES[st.session_state.selected_page]()
 
+
 def logout_user():
-    if 'token' in st.session_state:
-        del st.session_state['token']
+    if "token" in st.session_state:
+        del st.session_state["token"]
         st.success("You have been logged out.")
+
 
 #     # Define pages and their corresponding functions
 #     PAGES = {
