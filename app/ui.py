@@ -70,19 +70,23 @@ def setup_page():
     font-family: Arial, sans-serif;
     color: white;
     }
+    
     .stButton>button {
-        width: 100%;
-        height: 3em;
-        background-color: #4CAF50;
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
+    width: 100%;
+    height: 3em;
+    background: linear-gradient(to right, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 5px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     }
     .stButton>button:hover {
-        background-color: #45a049;
+        background: linear-gradient(to right, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+        border: 1px solid rgba(255, 255, 255, 0.5);
     }
     
     .navbar {
@@ -571,7 +575,16 @@ def home_page():
 
 # Document processing page function
 def document_processing_page():
-    st.title("🔄 Document Processing")
+    
+    st.markdown("""
+    <style>
+    .content {
+        margin-top: 200px;
+        
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<p style='color: white; text-align: center; opacity: 0.8; margin-bottom: -2.5em; font-size: 60px;'>Document Upload and Processing</p>", unsafe_allow_html=True)
 
     # Add a toggle for scanned document processing
     processing_mode = st.radio(
