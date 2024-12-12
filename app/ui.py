@@ -551,9 +551,9 @@ def home_page():
             <h3 style="color: white;">Transformo Docs: Revolutionizing Document Management</h3>
             <p style="color: white;">A powerful solution designed to tackle non-machine-readable documents like PDFs and Word files.</p>
             <ul style="color: white;">
-                <li>🔍 Searchable Documents</li>
-                <li>📄 Enhanced Accessibility</li>
-                <li>🤖 AI Integration Ready</li>
+                <li> Searchable Documents</li>
+                <li> Enhanced Accessibility</li>
+                <li> AI Integration Ready</li>
             </ul>
             <p style="color: white;">Transform your unstructured documents into organized, accessible data.</p>
         </div>
@@ -573,12 +573,12 @@ def home_page():
             <img src="data:image/jpeg;base64,{image2_base64}" alt="Key Features">
         </div>
         <div class="feature-text">
-            <h3 style="color: white;">🎯 Comprehensive Features</h3>
+            <h3 style="color: white;"> Comprehensive Features</h3>
             <ul style="color: white;">
-                <li>📊 Advanced Document Analytics</li>
-                <li>🔄 Seamless Conversion Tools</li>
-                <li>🔐 Compliance and Security</li>
-                <li>📈 Productivity Enhancement</li>
+                <li> Advanced Document Analytics</li>
+                <li> Seamless Conversion Tools</li>
+                <li> Compliance and Security</li>
+                <li> Productivity Enhancement</li>
             </ul>
             <p style="color: white;">Unlock the full potential of your documents with our cutting-edge features.</p>
         </div>
@@ -594,10 +594,10 @@ def home_page():
         <div class="feature-text">
             <h3 style="color: white;">🤖 AI-Powered Insights</h3>
             <ul style="color: white;">
-                <li>🧠 Intelligent Document Processing</li>
-                <li>💡 Smart Content Extraction</li>
-                <li>📝 Automated Summarization</li>
-                <li>🔬 Deep Document Analysis</li>
+                <li> Intelligent Document Processing</li>
+                <li> Smart Content Extraction</li>
+                <li> Automated Summarization</li>
+                <li> Deep Document Analysis</li>
             </ul>
             <p style="color: white;">Leverage artificial intelligence to transform how you interact with documents.</p>
         </div>
@@ -617,7 +617,7 @@ def document_processing_page():
         """
     <style>
     .content {
-        margin-top: 200px;
+        margin-top: 300px;
         
     </style>
     """,
@@ -831,33 +831,33 @@ def display_export_options(result, uploaded_file):
 
 # Function to display analytics
 def display_analytics(result):
-    st.subheader("📊 Document Analytics")
+    st.subheader("Document Analytics")
     col1, col2 = st.columns(2)
 
     with col1:
-        st.markdown("### 📏 Basic Metrics")
+        st.markdown("## Basic Metrics")
         st.write(f"**Word Count:** {result['analytics']['word_count']}")
         st.write(f"**Sentence Count:** {result['analytics']['sentence_count']}")
         st.write(
             f"**Average Sentence Length:** {result['analytics']['average_sentence_length']:.2f} words"
         )
 
-        st.markdown("### 🏷️ Named Entities")
+        st.markdown("###  Named Entities")
         st.write(f"**Entity Count:** {result['analytics']['entity_count']}")
         st.write("**Most Common Entities:**")
         for entity, count in result["analytics"]["most_common_entities"]:
             st.write(f"- {entity}: {count}")
 
     with col2:
-        st.markdown("### 🔑 Keywords")
+        st.markdown("### Keywords")
         st.write(f"**Keyword Count:** {result['analytics']['keyword_count']}")
 
-        st.markdown("### 📊 Word Frequency")
+        st.markdown("###  Word Frequency")
         st.write("**Most Common Words:**")
         for word, count in result["analytics"]["most_common_words"]:
             st.write(f"- {word}: {count}")
 
-    with st.expander("📝 Document Preview"):
+    with st.expander(" Document Preview"):
         preview_text = (
             result["extracted_text"][:500] + "..."
             if len(result["extracted_text"]) > 500
@@ -879,6 +879,22 @@ def display_graphs(result, uploaded_file):
             y=[count for _, count in word_freq],
             labels={"x": "Word", "y": "Frequency"},
             title="Top 10 Most Frequent Words",
+            color=[count for _, count in word_freq],  # Color by frequency
+            color_continuous_scale="Blugrn",  # Change to your preferred color scale
+        )
+        fig.update_layout(
+            title_x=0.35,  # Center title
+            title_font=dict(size=18),
+            margin=dict(
+                t=100,  # Top margin
+                b=50,  # Bottom margin
+                l=50,  # Left margin
+                r=50,  # Right margin
+            ),
+        )
+        fig.update_traces(
+            hovertemplate="Word: %{x}<br>Frequency: %{y}",
+            hoverlabel=dict(bgcolor="black", font_size=12),
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -892,6 +908,22 @@ def display_graphs(result, uploaded_file):
             y=[count for _, count in entity_freq],
             labels={"x": "Entity", "y": "Frequency"},
             title="Top 10 Most Common Named Entities",
+            color=[count for _, count in entity_freq],  # Color by frequency
+            color_continuous_scale="Blugrn",  # Change to your preferred color scale
+        )
+        fig.update_layout(
+            title_x=0.3,  # Center title
+            title_font=dict(size=18),
+            margin=dict(
+                t=100,  # Top margin
+                b=50,  # Bottom margin
+                l=50,  # Left margin
+                r=50,  # Right margin
+            ),
+        )
+        fig.update_traces(
+            hovertemplate="Entity: %{x}<br>Frequency: %{y}",
+            hoverlabel=dict(bgcolor="black", font_size=12),
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -907,6 +939,7 @@ def display_graphs(result, uploaded_file):
             for metric, value in metrics.items()
         ]
     )
+
     fig.update_layout(title_text="Basic Document Metrics", barmode="group")
     st.plotly_chart(fig, use_container_width=True)
 
@@ -964,8 +997,12 @@ def display_database_options(result, filename):
 
 # Function for saved documents page
 def saved_documents_page():
-    st.title("💾 Saved Documents")
-    st.info("This page displays all documents saved in the selected storage.")
+    st.markdown(
+        """
+        <h1 style='text-align: center; margin-top: 50px; font-size: 5rem;'>Saved Documents</h1>
+        """,
+        unsafe_allow_html=True,
+    )
 
     database_options = ["Secure Storage", "MongoDB Storage", "MySQL Storage"]
     selected_db = st.selectbox("Select Database", database_options)
