@@ -263,7 +263,7 @@ def setup_page():
                 /* App Name Label Styling */
                 div[data-testid='stVerticalBlock']:has(div#my_div_inner_%s):not(:has(div#my_div_outer)) 
                 .app-name-label {
-                    font-size: 1.5rem;
+                    font-size: 3.5rem;
                     font-weight: 800;
                     margin-right: 20px;
                     margin-left: 50px;
@@ -341,7 +341,7 @@ def setup_page():
             # Add app name to the first column
             with nav_cols[0]:
                 st.markdown(
-                    f'<div style="font-size: 1.5rem; font-weight: 800; opacity: 0.8;">{app_name}</div>',
+                    f'<div style="font-size: 2.2rem; font-weight: 800; opacity: 0.8; padding: 15px 5px">{app_name}</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -997,12 +997,8 @@ def display_database_options(result, filename):
 
 # Function for saved documents page
 def saved_documents_page():
-    st.markdown(
-        """
-        <h1 style='text-align: center; margin-top: 50px; font-size: 5rem;'>Saved Documents</h1>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.title("💾 Saved Documents")
+    st.info("This page displays all documents saved in the selected storage.")
 
     database_options = ["Secure Storage", "MongoDB Storage", "MySQL Storage"]
     selected_db = st.selectbox("Select Database", database_options)
@@ -1061,6 +1057,16 @@ def saved_documents_page():
 
 # Function for chat interface page
 def chat_interface_page():
+    st.markdown(
+        """
+    <style>
+    .content {
+        margin-top: 500px;
+        
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )
     st.title("💬 Chat with Your Document")
     st.info("This feature allows you to ask questions about your processed documents.")
 
@@ -1099,6 +1105,16 @@ def chat_interface_page():
 
 # Function to handle API token generation and management
 def api_token_page():
+    st.markdown(
+        """
+    <style>
+    .content {
+        margin-top: 500px;
+        
+    </style>
+    """,
+        unsafe_allow_html=True,
+    )
     st.title("🔑 API Token and Upload")
     st.info(
         "Generate API tokens and use them to upload and process documents via API. You can use these tokens with tools like Postman or other websites."
