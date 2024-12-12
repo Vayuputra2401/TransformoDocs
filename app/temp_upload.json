@@ -1,0 +1,127 @@
+{
+  "sentences": [
+    "Download Date: 1Br10/2021 Government af India Digvijay Singh",
+    "tDOB: 17/07/2004 geW MALE 4736 1149 4838 VID : 9142 2814 3338 9381 rrrr Issue Date: 0501/2021"
+  ],
+  "words": [
+    "download",
+    "date",
+    "government",
+    "af",
+    "india",
+    "digvijay",
+    "singh",
+    "tdob",
+    "gew",
+    "male",
+    "vid",
+    "rrrr",
+    "issue",
+    "date"
+  ],
+  "entities": [
+    {
+      "text": "1Br10/2021",
+      "label": "DATE"
+    },
+    {
+      "text": "India",
+      "label": "GPE"
+    },
+    {
+      "text": "Digvijay Singh",
+      "label": "PERSON"
+    },
+    {
+      "text": "17/07/2004",
+      "label": "DATE"
+    },
+    {
+      "text": "4736 1149",
+      "label": "CARDINAL"
+    },
+    {
+      "text": "9142 2814",
+      "label": "CARDINAL"
+    },
+    {
+      "text": "0501/2021",
+      "label": "DATE"
+    }
+  ],
+  "keywords": [
+    "India",
+    "male",
+    "vid",
+    "Singh",
+    "gew",
+    "date"
+  ],
+  "analytics": {
+    "word_count": 40,
+    "sentence_count": 2,
+    "average_sentence_length": 20.0,
+    "entity_count": 7,
+    "keyword_count": 6,
+    "most_common_entities": [
+      [
+        "DATE",
+        3
+      ],
+      [
+        "CARDINAL",
+        2
+      ],
+      [
+        "GPE",
+        1
+      ],
+      [
+        "PERSON",
+        1
+      ]
+    ],
+    "most_common_words": [
+      [
+        "date",
+        2
+      ],
+      [
+        "download",
+        1
+      ],
+      [
+        "government",
+        1
+      ],
+      [
+        "af",
+        1
+      ],
+      [
+        "india",
+        1
+      ],
+      [
+        "digvijay",
+        1
+      ],
+      [
+        "singh",
+        1
+      ],
+      [
+        "tdob",
+        1
+      ],
+      [
+        "gew",
+        1
+      ],
+      [
+        "male",
+        1
+      ]
+    ]
+  }
+}

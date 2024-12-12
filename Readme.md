@@ -243,3 +243,6 @@ When a user uploads a document:
 - Basic document chat interface
 
 The application provides a comprehensive solution for extracting, analyzing, and managing document information with a user-friendly interface.
+
+
+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
