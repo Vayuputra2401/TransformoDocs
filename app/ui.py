@@ -1033,13 +1033,15 @@ def saved_documents_page():
 
 
 # Function for chat interface page
+import json
+from llm import EnhancedJSONAgent
+
 def chat_interface_page():
     st.markdown(
         """
     <style>
     .content {
         margin-top: 500px;
-        
     </style>
     """,
         unsafe_allow_html=True,
@@ -1060,14 +1062,33 @@ def chat_interface_page():
     if "chat_history" not in st.session_state:
         st.session_state["chat_history"] = []
 
+    # Initialize EnhancedJSONAgent with the selected document's JSON data
+    try:
+        with open("temp_selected.json", "w", encoding="utf-8") as temp_file:
+            temp_file.write(selected_data["data"])
+
+        agent = EnhancedJSONAgent("temp_selected.json")
+    except Exception as e:
+        st.error(f"Error initializing agent: {e}")
+        return
+
     user_query = st.text_input("Ask a question about the document:")
 
     if user_query:
-        document_text = json.loads(selected_data["data"])["extracted_text"]
-        answer = ask_question_to_document(user_query, document_text)
-        st.session_state["chat_history"].append(
-            {"question": user_query, "answer": answer}
-        )
+        with st.spinner('Processing your query...'):
+            try:
+                answer = agent.process_query(user_query)
+
+                if isinstance(answer, pd.DataFrame):
+                    st.dataframe(answer)
+                elif answer:
+                    st.markdown(f"**Transformo Docs:** {answer}")
+
+                st.session_state["chat_history"].append(
+                    {"question": user_query, "answer": answer}
+                )
+            except Exception as e:
+                st.warning(f"Error processing query: {e}")
 
     if st.session_state["chat_history"]:
         st.write("### 🗨️ Chat History")
@@ -1078,6 +1099,7 @@ def chat_interface_page():
     if st.button("Clear Chat History"):
         st.session_state["chat_history"] = []
         st.success("Chat history cleared!")
+
 
 
 # Function to handle API token generation and management
