@@ -33,7 +33,61 @@ import pandas as pd
 from io import BytesIO
 from docx import Document
 
+# Load user data
+user_data = pd.read_excel('employees.xlsx')  # Excel file containing user information
 
+
+# Function to generate JWT token
+def generate_token(username, role):
+    payload = {
+        'username': username,
+        'role': role,
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+    }
+    token = jwt.encode(payload, 'secret_key', algorithm='HS256')
+    return token
+
+# Function to verify JWT token
+def verify_token(token):
+    try:
+        payload = jwt.decode(token, 'secret_key', algorithms=['HS256'])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+    
+    
+# Function to authenticate user using passcode
+def authenticate_user():
+    st.title("Passcode Authentication")
+    st.write("Please enter your username and passcode")
+
+    username = st.text_input("Username")
+    passcode = st.text_input("Passcode", type="password")
+
+    if st.button("Login"):
+        user_info = user_data[user_data['username'] == username]
+        if not user_info.empty:
+            role = user_info.iloc[0]['role']
+            token = generate_token(username, role)
+            st.success(f"Authentication successful! Welcome, {username}")
+            st.write(f"Your role: {role}")
+            st.write(f"Your token: {token}")
+            st.session_state['token'] = token
+            return
+        else:
+            st.error("Invalid username or passcode. Please try again.")
+    
+# Function to check user role
+def check_role(required_role):
+    token = st.session_state.get('token')
+    if token:
+        payload = verify_token(token)
+        if payload and payload['role'] == required_role:
+            return True
+    return False
+                
 # Function to calculate file sizes
 def calculate_file_sizes(uploaded_file, result):
     original_size_mb = uploaded_file.size / (1024 * 1024)
@@ -173,10 +227,12 @@ def setup_page():
     # Define pages
     PAGES = {
         "Home": home_page,
-        "Document Processing": document_processing_page,
-        "Saved Documents": saved_documents_page,
+        "Upload": document_processing_page,
+        "Storage": saved_documents_page,
         "Chat Interface": chat_interface_page,
         "API Token": api_token_page,
+        "Login": authenticate_user,
+        "Logout": logout_user,
     }
 
     # Initialize session state for page selection if not set
@@ -366,6 +422,10 @@ def setup_page():
     # Render the selected page
     PAGES[st.session_state.selected_page]()
 
+def logout_user():
+    if 'token' in st.session_state:
+        del st.session_state['token']
+        st.success("You have been logged out.")
 
 #     # Define pages and their corresponding functions
 #     PAGES = {
