@@ -13,6 +13,10 @@ import requests
 import os
 import jwt
 import datetime
+from streamlit_option_menu import option_menu
+from streamlit_extras.add_vertical_space import add_vertical_space
+from streamlit_lottie import st_lottie
+from streamlit_navigation_bar import st_navbar
 
 # Function to calculate file sizes
 def calculate_file_sizes(uploaded_file, result):
@@ -20,14 +24,11 @@ def calculate_file_sizes(uploaded_file, result):
     extracted_size_mb = len(json.dumps(result['json_output'])) / (1024 * 1024)
     return original_size_mb, extracted_size_mb
 
-# Function to load and display the logo
 def load_logo():
-    # First, try to load the logo from the local assets folder
-    local_logo_path = os.path.join("assets", "logo.png")
+    local_logo_path = os.path.join("assets", "logo-white.png")
     if os.path.exists(local_logo_path):
         return Image.open(local_logo_path)
     
-    # If local logo is not found, try to fetch from GitHub
     github_logo_url = "https://raw.githubusercontent.com/vayuputra2401/transformodocs/main/app/assets/logo-white.png"
     try:
         response = requests.get(github_logo_url)
@@ -36,71 +37,27 @@ def load_logo():
     except Exception as e:
         st.warning(f"Failed to fetch logo from GitHub: {str(e)}")
     
-    # If both local and GitHub logo fetch fail, return None
     return None
 
-# Main page setup function
+# Main page setup function with enhanced UI elements
 def setup_page():
-    st.set_page_config(page_title="Transformo-Docs", layout="wide")
+    st.set_page_config(page_title ="Transformo-Docs", layout="wide")
     
-    # Load and display logo
-    logo = load_logo()
-    if logo:
-        st.sidebar.image(logo, width=250)
-    st.sidebar.title("📄 Transformo Docs")
-    pages = {
-        "Home": home_page,
-        "Upload Document and Processing": document_processing_page,
-        "Saved Documents Storage": saved_documents_page,
-        "Chat Interface": chat_interface_page,
-        "API Token and Upload": api_token_page,
-    }
-    page = st.sidebar.radio("Navigate", list(pages.keys()))
-    pages[page]()
-
-# Home page function
-def home_page():
-    col1, col2 = st.columns([2, 1])
+    # # Load and display logo
+    # logo = load_logo()
+    # if logo:
+    #     st.sidebar.image(logo, width=250)
+    # st.sidebar.markdown('<div style="background-color: black; padding: 10px 0;">' + 
+    #                     '<h2 style="color: white; text-align: center;">📄 Transformo Docs</h2>' + 
+    #                     '</div>', unsafe_allow_html=True)
     
-    with col1:
-        st.title("🏠 Welcome to Transformo Docs")
-        st.markdown("""
-        <style>
-        .big-font {
-            font-size:20px !important;
-            color: #1E88E5;
-        }
-        </style>
-        """, unsafe_allow_html=True)
-        
-        st.markdown('<p class="big-font">🚀 Empowering Document Management</p>', unsafe_allow_html=True)
-        
-        st.write("""
-        Transformo Docs is a powerful solution designed to tackle the challenge of non-machine-readable documents like PDFs and Word files. 
-        
-        🌐 This app automates the conversion of such documents into machine-readable formats, making them:
-        - 🔍 Searchable
-        - 📄 Accessible
-        - 🤖 Ready for AI integration
-        
-        Whether you're working with scanned documents or files generated through software, Transformo Docs ensures your data is always organized and easily accessible.
-        """)
-        
-        st.markdown("""
-        ---
-        ### 🎯 Key Features
-        - 📊 Advanced Analytics
-        - 🔄 Automated Conversion
-        - 🔐 Compliance Ready
-        - 📈 Productivity Boost
-        """)
-
-    
-    st.info("Use the sidebar to navigate through different features of the application.")
-
-    # Custom button styling
     st.markdown("""
     <style>
+    [data-testid="stAppViewContainer"] {
+    background-image: linear-gradient(to right top, #232425, #3b5359, #548882, #87be9b, #daf0aa);
+    font-family: Arial, sans-serif;
+    color: white;
+    }
     .stButton>button {
         width: 100%;
         height: 3em;
@@ -115,8 +72,490 @@ def home_page():
     .stButton>button:hover {
         background-color: #45a049;
     }
+    
+    .navbar {
+        position: fixed;
+        top: 5em;
+        left: 2%;
+        right: 2%;
+        z-index: 10;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        border-radius: 15px;        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .navbar-brand {
+        color: white;
+        font-size: 1.5em;
+        font-weight: bold;
+        margin-left: 10px;
+    }
+    .navbar-menu {
+        display: flex;
+        gap: 15px;
+    }
+    .navbar-item {
+        color: white;
+        text-decoration: none;
+        padding: 8px 15px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+    .navbar-item:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    .navbar-item.active {
+        background-color: rgba(76, 175, 80, 0.5);
+    }
+    .navbar h1 {
+        text-align: center;
+        color: #fff;
+        margin: 0;
+    }
+    .tabs {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .tab-button {
+        background-color: #333;
+        color: white;
+        padding: 10px;
+        margin: 5px;
+        border-radius: 5px;
+        cursor: pointer;
+        text-align: center;
+    }
+    .tab-button:hover {
+        background-color: #555;
+    }
+    .tab-button.selected {
+        background-color: #4CAF50;
+    }
+    .tabs {
+        display: flex;
+        justify-content: center;
+    }
+    .content {
+        margin-top: 100px;
+        
     </style>
     """, unsafe_allow_html=True)
+
+    # Define pages
+    PAGES = {
+        "Home": home_page,
+        "Document Processing": document_processing_page,
+        "Saved Documents": saved_documents_page,
+        "Chat Interface": chat_interface_page,
+        "API Token": api_token_page
+    }
+
+    # Initialize session state for page selection if not set
+    if "selected_page" not in st.session_state:
+        st.session_state.selected_page = "Home"
+        
+#     # Navbar structure with dynamic buttons
+#     st.markdown("""
+#         <div class="navbar">
+#             <div class="navbar-brand">Transformo Docs</div>
+#             <div class="navbar-menu">
+#     """, unsafe_allow_html=True)
+
+#     # Close the navbar HTML
+#     st.markdown("</div></div>", unsafe_allow_html=True)
+    
+#     st.markdown("""
+#     <style>
+#     .navbar-container {
+#         padding: 20px;
+#     }
+#     </style>
+# """, unsafe_allow_html=True)
+    
+    # # Create a container for the navbar
+    # with st.container():
+    #     # Start the custom navbar container with light grey background
+        
+    #     # Create a navbar layout with buttons for each page dynamically
+    #     nav_cols = st.columns([1] * len(PAGES))  # Equal columns for spacing
+    #     for i, (page_name, page_func) in enumerate(PAGES.items()):
+    #         with nav_cols[i]:
+    #             # Create a button for each page in the navbar
+    #             button = st.button(page_name, key=f"nav_{page_name}")
+    #             if button:
+    #                 st.session_state.selected_page = page_name
+    #                 st.rerun()  # Rerun to update the page content
+    
+    
+    def create_glassmorphic_container(id, app_name="My App"):
+        # Helper function to create a glassmorphic container
+        plh = st.container()
+        html_code = """<div id = 'my_div_outer'></div>"""
+        st.markdown(html_code, unsafe_allow_html=True)
+    
+        with plh:
+            inner_html_code = """<div id = 'my_div_inner_%s'></div>""" % id
+            plh.markdown(inner_html_code, unsafe_allow_html=True)
+        
+        # Glassmorphism CSS with additional styling for buttons and container
+        glassmorphic_style = """
+            <style>
+                /* Container Styling */
+                div[data-testid='stVerticalBlock']:has(div#my_div_inner_%s):not(:has(div#my_div_outer)) {
+                    position: fixed;
+                    top: 5em;
+                    left: 50%%;
+                    transform: translateX(-50%%);
+                    padding: 15px 20px;
+                    background: rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(10px);
+                    -webkit-backdrop-filter: blur(10px);
+                    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+                    border-radius: 20px;
+                    border: 1px solid rgba(255, 255, 255, 0.125);
+                    overflow: hidden;
+                    max-width: 120%%;
+                    margin: 0 auto;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1000;
+                }
+                
+                /* Navbar Layout */
+                div[data-testid='stVerticalBlock']:has(div#my_div_inner_%s):not(:has(div#my_div_outer)) 
+                div[data-testid='stHorizontalBlock'] {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    width: 100%%;
+                    padding-bottom: 15px;
+                }
+                
+                /* App Name Label Styling */
+                div[data-testid='stVerticalBlock']:has(div#my_div_inner_%s):not(:has(div#my_div_outer)) 
+                .app-name-label {
+                    font-size: 1.5rem;
+                    font-weight: 800;
+                    margin-right: 20px;
+                    margin-left: 50px;
+                    margin-bottom: 50px;
+                    display: flex;
+                    align-items: center;
+                    color: inherit;
+                    opacity: 0.8;
+                }
+                
+                /* Columns Styling to Push Buttons Right */
+                div[data-testid='stVerticalBlock']:has(div#my_div_inner_%s):not(:has(div#my_div_outer)) 
+                div[data-testid='stHorizontalBlock'] > div:first-child {
+                    flex-grow: 1;
+                }
+                
+                /* Button Styling */
+                div[data-testid='stVerticalBlock']:has(div#my_div_inner_%s):not(:has(div#my_div_outer)) 
+                div[data-testid='stHorizontalBlock'] button {
+                    padding: 5px 10px !important;
+                    margin: 0 5px;
+                    font-size: 0.8rem;
+                    background-color: transparent;
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    color: inherit;
+                    transition: all 0.3s ease;
+                    white-space: nowrap;
+                }
+                
+                div[data-testid='stVerticalBlock']:has(div#my_div_inner_%s):not(:has(div#my_div_outer)) 
+                div[data-testid='stHorizontalBlock'] button:hover {
+                    background-color: rgba(255, 255, 255, 0.2);
+                    transform: scale(1.05);
+                }
+                
+                /* Optional: Add a subtle gradient overlay for more depth */
+                div[data-testid='stVerticalBlock']:has(div#my_div_inner_%s):not(:has(div#my_div_outer))::before {
+                    content: "";
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: linear-gradient(
+                        135deg, 
+                        rgba(255, 255, 255, 0.1), 
+                        rgba(255, 255, 255, 0.05)
+                    );
+                    z-index: 1;
+                    pointer-events: none;
+                }
+            </style>
+            """ % (id, id, id, id, id, id, id)
+        
+        st.markdown(glassmorphic_style, unsafe_allow_html=True)
+        
+        return plh
+
+    def create_navbar(app_name="Transformo Docs"):
+        # Create the navbar container with glassmorphism effect
+        navbar_container = create_glassmorphic_container("navbar")
+        
+        with navbar_container:
+            # Create a navbar layout with an extra column for app name
+            nav_cols = st.columns([2, 1] + [1]*len(PAGES))
+            
+            # Add app name to the first column
+            with nav_cols[0]:
+                st.markdown(f'<div style="font-size: 1.5rem; font-weight: 800; opacity: 0.8;">{app_name}</div>', unsafe_allow_html=True)
+            
+            # Create buttons in the remaining columns
+            for i, (page_name, page_func) in enumerate(PAGES.items()):
+                with nav_cols[i+2]:  # Offset by 2 due to app name and initial spacing column
+                    # Create a button for each page in the navbar
+                    button = st.button(page_name, key=f"nav_{page_name}")
+                    if button:
+                        st.session_state.selected_page = page_name
+                        st.rerun()  # Rerun to update the page content
+
+
+
+    # Initialize selected page in session state if not already set
+    if 'selected_page' not in st.session_state:
+        st.session_state.selected_page = list(PAGES.keys())[0]  # Default to first page
+    
+    # Create the navbar
+    create_navbar()
+    
+    # Render the selected page
+    PAGES[st.session_state.selected_page]()
+
+
+
+
+
+
+    
+    
+#     # Define pages and their corresponding functions
+#     PAGES = {
+#         "Home": home_page,
+#         "Document Processing": document_processing_page,
+#         "Saved Documents": saved_documents_page,
+#         "Chat Interface": chat_interface_page,
+#         "API Token": api_token_page,
+#     }
+    
+#     # URLs for external links like GitHub
+#     urls = {"GitHub": "https://github.com/gabrieltempass/streamlit-navigation-bar"}
+
+#     # Styles for the navbar to retain the glassmorphism effect
+#     styles = {
+#         "nav": {
+#             "background-color": "rgba(255, 255, 255, 0.1)",  # Semi-transparent for glassmorphism
+#             "backdrop-filter": "blur(10px)",  # Glassmorphism effect
+#             "border-radius": "15px",
+#             "padding": "10px",
+#         },
+#         "img": {
+#             "padding-right": "14px",
+#         },
+#         "span": {
+#             "color": "white",
+#             "padding": "14px",
+#         },
+#         "active": {
+#             "background-color": "white",
+#             "color": "var(--text-color)",
+#             "font-weight": "normal",
+#             "padding": "14px",
+#         }
+#     }
+
+#     # Options for the navbar
+#     options = {
+#         "show_menu": False,  # Hide the menu
+#         "show_sidebar": False,  # Hide the sidebar
+#     }
+
+#     # Initialize session state for page selection if not set
+#     if "selected_page" not in st.session_state:
+#         st.session_state.selected_page = "Home"
+
+#     # Use st_navbar to create the navbar
+#     page = st_navbar(
+#         list(PAGES.keys()),  # Pass the page names from PAGES
+#         logo_path=logo_path,
+#         styles=styles,
+#         options=options
+#     )
+
+#     # Get the corresponding page function based on the selected page
+#     go_to = PAGES.get(page)
+#     if go_to:
+#         go_to()  # Render the selected page
+
+#     # Optional: custom CSS to keep the glassmorphism effect on other elements
+#     st.markdown("""
+#     <style>
+#         [data-testid="stAppViewContainer"] {
+#             background-image: linear-gradient(to right top, #232425, #3b5359, #548882, #87be9b, #daf0aa);
+#             font-family: Arial, sans-serif;
+#             color: white;
+#         }
+#         .tab-button.selected {
+#             background-color: #4CAF50;
+#         }
+#     </style>
+#     """, unsafe_allow_html=True)
+
+ 
+import base64
+
+def get_base64_image(image_path):
+    """Encodes an image to a Base64 string."""
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode("utf-8")
+   
+
+def home_page():
+    
+    # Encode images as Base64
+    image1_base64 = get_base64_image("assets/download.png")
+    image2_base64 = get_base64_image("assets/download-2.jpg")
+    
+    # Custom CSS
+    st.markdown("""
+    <style>
+    .feature-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 40px;
+        padding: 20px;
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 10px;
+    }
+    .feature-text {
+        flex: 1;
+        padding: 0 20px;
+    }
+    .feature-image {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .feature-image img {
+        max-width: 100%;
+        max-height: 500px;
+        border-radius: 10px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <style>
+    .stApp { scroll-behavior: smooth; }
+    .explore-btn {
+            text-decoration: none;
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-family: Arial, sans-serif;
+        }
+        .explore-btn:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+        
+    
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Header with two-line text
+    st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+    st.markdown("<p style='color: white; text-align: center; opacity: 0.8; margin-bottom: -0.5em; font-size: 100px;'>Welcome to</p>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: white; margin-top: 0;font-size: 170px;'>Transformo Docs</h1>", unsafe_allow_html=True)
+    
+    st.markdown('<p style="text-align: center; font-size: 40px; color: white;">Empowering Document Management</p>', unsafe_allow_html=True)
+    # Explore button with anchor link
+    st.markdown("""
+        <div style='text-align: center; margin-top: 3px; margin-bottom: 55px'>
+            <a style = 'text-decoration: none; 'href='#target-section' class='explore-btn'>
+                Explore Features
+            </a>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # # Title
+    # st.markdown("<h1 style='text-align: center; color: white;'>Welcome to Transformo Docs</h1>", unsafe_allow_html=True)
+    
+
+    # First Feature Section
+    st.markdown(f"""
+    <div class="feature-container" id='target-section'>
+        <div class="feature-text">
+            <h3 style="color: white;">Transformo Docs: Revolutionizing Document Management</h3>
+            <p style="color: white;">A powerful solution designed to tackle non-machine-readable documents like PDFs and Word files.</p>
+            <ul style="color: white;">
+                <li>🔍 Searchable Documents</li>
+                <li>📄 Enhanced Accessibility</li>
+                <li>🤖 AI Integration Ready</li>
+            </ul>
+            <p style="color: white;">Transform your unstructured documents into organized, accessible data.</p>
+        </div>
+        <div class="feature-image">
+            <img src="data:image/png;base64,{image1_base64}" alt="Document Management">
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Second Feature Section
+    st.markdown(f"""
+    <div class="feature-container">
+        <div class="feature-image">
+            <img src="data:image/jpeg;base64,{image2_base64}" alt="Key Features">
+        </div>
+        <div class="feature-text">
+            <h3 style="color: white;">🎯 Comprehensive Features</h3>
+            <ul style="color: white;">
+                <li>📊 Advanced Document Analytics</li>
+                <li>🔄 Seamless Conversion Tools</li>
+                <li>🔐 Compliance and Security</li>
+                <li>📈 Productivity Enhancement</li>
+            </ul>
+            <p style="color: white;">Unlock the full potential of your documents with our cutting-edge features.</p>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Third Feature Section (Optional)
+    st.markdown(f"""
+    <div class="feature-container">
+        <div class="feature-text">
+            <h3 style="color: white;">🤖 AI-Powered Insights</h3>
+            <ul style="color: white;">
+                <li>🧠 Intelligent Document Processing</li>
+                <li>💡 Smart Content Extraction</li>
+                <li>📝 Automated Summarization</li>
+                <li>🔬 Deep Document Analysis</li>
+            </ul>
+            <p style="color: white;">Leverage artificial intelligence to transform how you interact with documents.</p>
+        </div>
+        <div class="feature-image">
+            <img src="data:image/jpeg;base64,{image2_base64}" alt="AI-Powered Insights">
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
+    
+
 
 # Document processing page function
 def document_processing_page():
