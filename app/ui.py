@@ -28,6 +28,10 @@ from streamlit_extras.add_vertical_space import add_vertical_space
 from streamlit_lottie import st_lottie
 from streamlit_navigation_bar import st_navbar
 import pyperclip
+import base64
+import pandas as pd
+from io import BytesIO
+from docx import Document
 
 
 # Function to calculate file sizes
@@ -36,11 +40,12 @@ def calculate_file_sizes(uploaded_file, result):
     extracted_size_mb = len(json.dumps(result["json_output"])) / (1024 * 1024)
     return original_size_mb, extracted_size_mb
 
+
 def load_logo():
     local_logo_path = os.path.join("assets", "logo-white.png")
     if os.path.exists(local_logo_path):
         return Image.open(local_logo_path)
-    
+
     github_logo_url = "https://raw.githubusercontent.com/vayuputra2401/transformodocs/main/app/assets/logo-white.png"
     try:
         response = requests.get(github_logo_url)
@@ -48,22 +53,24 @@ def load_logo():
             return Image.open(io.BytesIO(response.content))
     except Exception as e:
         st.warning(f"Failed to fetch logo from GitHub: {str(e)}")
-    
+
     return None
+
 
 # Main page setup function with enhanced UI elements
 def setup_page():
-    st.set_page_config(page_title ="Transformo-Docs", layout="wide")
-    
+    st.set_page_config(page_title="Transformo-Docs", layout="wide")
+
     # # Load and display logo
     # logo = load_logo()
     # if logo:
     #     st.sidebar.image(logo, width=250)
-    # st.sidebar.markdown('<div style="background-color: black; padding: 10px 0;">' + 
-    #                     '<h2 style="color: white; text-align: center;">📄 Transformo Docs</h2>' + 
+    # st.sidebar.markdown('<div style="background-color: black; padding: 10px 0;">' +
+    #                     '<h2 style="color: white; text-align: center;">📄 Transformo Docs</h2>' +
     #                     '</div>', unsafe_allow_html=True)
-    
-    st.markdown("""
+
+    st.markdown(
+        """
     <style>
     [data-testid="stAppViewContainer"] {
     background-image: linear-gradient(to right top, #232425, #3b5359, #548882, #87be9b, #daf0aa);
@@ -159,7 +166,9 @@ def setup_page():
         margin-top: 100px;
         
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     # Define pages
     PAGES = {
@@ -167,35 +176,35 @@ def setup_page():
         "Document Processing": document_processing_page,
         "Saved Documents": saved_documents_page,
         "Chat Interface": chat_interface_page,
-        "API Token": api_token_page
+        "API Token": api_token_page,
     }
 
     # Initialize session state for page selection if not set
     if "selected_page" not in st.session_state:
         st.session_state.selected_page = "Home"
-        
-#     # Navbar structure with dynamic buttons
-#     st.markdown("""
-#         <div class="navbar">
-#             <div class="navbar-brand">Transformo Docs</div>
-#             <div class="navbar-menu">
-#     """, unsafe_allow_html=True)
 
-#     # Close the navbar HTML
-#     st.markdown("</div></div>", unsafe_allow_html=True)
-    
-#     st.markdown("""
-#     <style>
-#     .navbar-container {
-#         padding: 20px;
-#     }
-#     </style>
-# """, unsafe_allow_html=True)
-    
+    #     # Navbar structure with dynamic buttons
+    #     st.markdown("""
+    #         <div class="navbar">
+    #             <div class="navbar-brand">Transformo Docs</div>
+    #             <div class="navbar-menu">
+    #     """, unsafe_allow_html=True)
+
+    #     # Close the navbar HTML
+    #     st.markdown("</div></div>", unsafe_allow_html=True)
+
+    #     st.markdown("""
+    #     <style>
+    #     .navbar-container {
+    #         padding: 20px;
+    #     }
+    #     </style>
+    # """, unsafe_allow_html=True)
+
     # # Create a container for the navbar
     # with st.container():
     #     # Start the custom navbar container with light grey background
-        
+
     #     # Create a navbar layout with buttons for each page dynamically
     #     nav_cols = st.columns([1] * len(PAGES))  # Equal columns for spacing
     #     for i, (page_name, page_func) in enumerate(PAGES.items()):
@@ -205,18 +214,17 @@ def setup_page():
     #             if button:
     #                 st.session_state.selected_page = page_name
     #                 st.rerun()  # Rerun to update the page content
-    
-    
+
     def create_glassmorphic_container(id, app_name="My App"):
         # Helper function to create a glassmorphic container
         plh = st.container()
         html_code = """<div id = 'my_div_outer'></div>"""
         st.markdown(html_code, unsafe_allow_html=True)
-    
+
         with plh:
             inner_html_code = """<div id = 'my_div_inner_%s'></div>""" % id
             plh.markdown(inner_html_code, unsafe_allow_html=True)
-        
+
         # Glassmorphism CSS with additional styling for buttons and container
         glassmorphic_style = """
             <style>
@@ -308,52 +316,57 @@ def setup_page():
                     pointer-events: none;
                 }
             </style>
-            """ % (id, id, id, id, id, id, id)
-        
+            """ % (
+            id,
+            id,
+            id,
+            id,
+            id,
+            id,
+            id,
+        )
+
         st.markdown(glassmorphic_style, unsafe_allow_html=True)
-        
+
         return plh
 
     def create_navbar(app_name="Transformo Docs"):
         # Create the navbar container with glassmorphism effect
         navbar_container = create_glassmorphic_container("navbar")
-        
+
         with navbar_container:
             # Create a navbar layout with an extra column for app name
-            nav_cols = st.columns([2, 1] + [1]*len(PAGES))
-            
+            nav_cols = st.columns([2, 1] + [1] * len(PAGES))
+
             # Add app name to the first column
             with nav_cols[0]:
-                st.markdown(f'<div style="font-size: 1.5rem; font-weight: 800; opacity: 0.8;">{app_name}</div>', unsafe_allow_html=True)
-            
+                st.markdown(
+                    f'<div style="font-size: 1.5rem; font-weight: 800; opacity: 0.8;">{app_name}</div>',
+                    unsafe_allow_html=True,
+                )
+
             # Create buttons in the remaining columns
             for i, (page_name, page_func) in enumerate(PAGES.items()):
-                with nav_cols[i+2]:  # Offset by 2 due to app name and initial spacing column
+                with nav_cols[
+                    i + 2
+                ]:  # Offset by 2 due to app name and initial spacing column
                     # Create a button for each page in the navbar
                     button = st.button(page_name, key=f"nav_{page_name}")
                     if button:
                         st.session_state.selected_page = page_name
                         st.rerun()  # Rerun to update the page content
 
-
-
     # Initialize selected page in session state if not already set
-    if 'selected_page' not in st.session_state:
+    if "selected_page" not in st.session_state:
         st.session_state.selected_page = list(PAGES.keys())[0]  # Default to first page
-    
+
     # Create the navbar
     create_navbar()
-    
+
     # Render the selected page
     PAGES[st.session_state.selected_page]()
 
 
-
-
-
-
-    
-    
 #     # Define pages and their corresponding functions
 #     PAGES = {
 #         "Home": home_page,
@@ -362,7 +375,7 @@ def setup_page():
 #         "Chat Interface": chat_interface_page,
 #         "API Token": api_token_page,
 #     }
-    
+
 #     # URLs for external links like GitHub
 #     urls = {"GitHub": "https://github.com/gabrieltempass/streamlit-navigation-bar"}
 
@@ -426,23 +439,25 @@ def setup_page():
 #     </style>
 #     """, unsafe_allow_html=True)
 
- 
+
 import base64
+
 
 def get_base64_image(image_path):
     """Encodes an image to a Base64 string."""
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
-   
+
 
 def home_page():
-    
+
     # Encode images as Base64
     image1_base64 = get_base64_image("assets/download.png")
     image2_base64 = get_base64_image("assets/download-2.jpg")
-    
+
     # Custom CSS
-    st.markdown("""
+    st.markdown(
+        """
     <style>
     .feature-container {
         display: flex;
@@ -468,9 +483,12 @@ def home_page():
         border-radius: 10px;
     }
     </style>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
+    """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        """
     <style>
     .stApp { scroll-behavior: smooth; }
     .explore-btn {
@@ -491,29 +509,43 @@ def home_page():
         
     
     </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     # Header with two-line text
     st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-    st.markdown("<p style='color: white; text-align: center; opacity: 0.8; margin-bottom: -0.5em; font-size: 100px;'>Welcome to</p>", unsafe_allow_html=True)
-    st.markdown("<h1 style='text-align: center; color: white; margin-top: 0;font-size: 170px;'>Transformo Docs</h1>", unsafe_allow_html=True)
-    
-    st.markdown('<p style="text-align: center; font-size: 40px; color: white;">Empowering Document Management</p>', unsafe_allow_html=True)
+    st.markdown(
+        "<p style='color: white; text-align: center; opacity: 0.8; margin-bottom: -0.5em; font-size: 100px;'>Welcome to</p>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<h1 style='text-align: center; color: white; margin-top: 0;font-size: 170px;'>Transformo Docs</h1>",
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<p style="text-align: center; font-size: 40px; color: white;">Empowering Document Management</p>',
+        unsafe_allow_html=True,
+    )
     # Explore button with anchor link
-    st.markdown("""
+    st.markdown(
+        """
         <div style='text-align: center; margin-top: 3px; margin-bottom: 55px'>
             <a style = 'text-decoration: none; 'href='#target-section' class='explore-btn'>
                 Explore Features
             </a>
         </div>
-        """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True,
+    )
 
     # # Title
     # st.markdown("<h1 style='text-align: center; color: white;'>Welcome to Transformo Docs</h1>", unsafe_allow_html=True)
-    
 
     # First Feature Section
-    st.markdown(f"""
+    st.markdown(
+        f"""
     <div class="feature-container" id='target-section'>
         <div class="feature-text">
             <h3 style="color: white;">Transformo Docs: Revolutionizing Document Management</h3>
@@ -529,10 +561,13 @@ def home_page():
             <img src="data:image/png;base64,{image1_base64}" alt="Document Management">
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     # Second Feature Section
-    st.markdown(f"""
+    st.markdown(
+        f"""
     <div class="feature-container">
         <div class="feature-image">
             <img src="data:image/jpeg;base64,{image2_base64}" alt="Key Features">
@@ -548,10 +583,13 @@ def home_page():
             <p style="color: white;">Unlock the full potential of your documents with our cutting-edge features.</p>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
 
     # Third Feature Section (Optional)
-    st.markdown(f"""
+    st.markdown(
+        f"""
     <div class="feature-container">
         <div class="feature-text">
             <h3 style="color: white;">🤖 AI-Powered Insights</h3>
@@ -567,24 +605,29 @@ def home_page():
             <img src="data:image/jpeg;base64,{image2_base64}" alt="AI-Powered Insights">
         </div>
     </div>
-    """, unsafe_allow_html=True)
-
-
-    
+    """,
+        unsafe_allow_html=True,
+    )
 
 
 # Document processing page function
 def document_processing_page():
-    
-    st.markdown("""
+
+    st.markdown(
+        """
     <style>
     .content {
         margin-top: 200px;
         
     </style>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("<p style='color: white; text-align: center; opacity: 0.8; margin-bottom: -2.5em; font-size: 60px;'>Document Upload and Processing</p>", unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        "<p style='color: white; text-align: center; opacity: 0.8; margin-bottom: 0.8em; font-size: 60px;'>Document Upload and Processing</p>",
+        unsafe_allow_html=True,
+    )
 
     # Add a toggle for scanned document processing
     processing_mode = st.radio(
@@ -678,6 +721,45 @@ def upload_document(allow_scanned=False):
         st.session_state.is_scanned = is_scanned
         st.info(f"File '{uploaded_file.name}' uploaded successfully.")
 
+        # If a file is already in session state
+    if st.session_state.uploaded_file is not None:
+        file_name = st.session_state.uploaded_file.name
+
+        # Display the button to preview the file
+        if st.button("Preview File"):
+            st.write(f"Preview of **{file_name}**:")
+            # Full-page expander for preview
+            with st.expander(f"Full-Page Preview: {file_name}", expanded=True):
+                if file_name.endswith(".txt"):
+                    # Display text content for .txt files
+                    content = st.session_state.uploaded_file.read().decode("utf-8")
+                    st.text_area("Text Content", content, height=700)
+                elif file_name.endswith(".xlsx"):
+                    # Display table content for .xlsx files
+                    try:
+                        data = pd.read_excel(st.session_state.uploaded_file)
+                        st.dataframe(data, height=700)
+                    except Exception as e:
+                        st.error(f"Could not display Excel file: {str(e)}")
+                elif file_name.endswith(".docx"):
+                    # Display text content for .docx files
+                    try:
+                        doc = Document(st.session_state.uploaded_file)
+                        doc_text = "\n".join([p.text for p in doc.paragraphs])
+                        st.text_area("Document Content", doc_text, height=700)
+                    except Exception as e:
+                        st.error(f"Could not display Word document: {str(e)}")
+                elif file_name.endswith(".pdf"):
+                    # Embed PDF in an iframe
+                    try:
+                        pdf_bytes = st.session_state.uploaded_file.read()
+                        b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+                        pdf_display = f'<iframe src="data:application/pdf;base64,{b64_pdf}" width="100%" height="700" type="application/pdf"></iframe>'
+                        st.markdown(pdf_display, unsafe_allow_html=True)
+                    except Exception as e:
+                        st.error(f"Could not preview PDF: {str(e)}")
+                else:
+                    st.warning("Preview not available for this file type.")
     return st.session_state.uploaded_file
 
 
@@ -701,8 +783,50 @@ def display_export_options(result, uploaded_file):
         mime=f"application/{file_extension}",
     )
 
-    with st.expander("View Processed Output"):
-        st.code(download_content, language=file_extension.lower())
+    # with st.expander("View Processed Output"):
+    #     st.code(download_content, language=file_extension.lower())
+    # Full-page expander for preview and processed output
+    with st.expander(f"Preview & Processed Output ", expanded=False):
+        # Side-by-side columns for preview and processed content
+        col1, col2 = st.columns(2)
+        uploaded_file.seek(0)
+
+        with col1:
+            st.subheader("Document Preview")
+            if uploaded_file.name.endswith("txt"):
+                # Display text content for .txt files
+                content = uploaded_file.read().decode("utf-8")
+                st.text_area("Text Content", content, height=700)
+            elif uploaded_file.name.endswith("xlsx"):
+                # Display table content for .xlsx files
+                try:
+                    data = pd.read_excel(uploaded_file)
+                    st.dataframe(data, height=700)
+                except Exception as e:
+                    st.error(f"Could not display Excel file: {str(e)}")
+            elif uploaded_file.name.endswith("docx"):
+                # Display text content for .docx files
+                try:
+                    doc = Document(uploaded_file)
+                    doc_text = "\n".join([p.text for p in doc.paragraphs])
+                    st.text_area("Document Content", doc_text, height=700)
+                except Exception as e:
+                    st.error(f"Could not display Word document: {str(e)}")
+            elif uploaded_file.name.endswith("pdf"):
+                # Embed PDF in an iframe
+                try:
+                    pdf_bytes = uploaded_file.read()
+                    b64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+                    pdf_display = f'<iframe src="data:application/pdf;base64,{b64_pdf}" width="100%" height="700" type="application/pdf"></iframe>'
+                    st.markdown(pdf_display, unsafe_allow_html=True)
+                except Exception as e:
+                    st.error(f"Could not preview PDF: {str(e)}")
+            else:
+                st.warning("Preview not available for this file type.")
+
+        with col2:
+            st.subheader("Processed Output")
+            st.code(download_content, language=file_extension.lower())
 
 
 # Function to display analytics
