@@ -263,7 +263,7 @@ def setup_page():
                 /* App Name Label Styling */
                 div[data-testid='stVerticalBlock']:has(div#my_div_inner_%s):not(:has(div#my_div_outer)) 
                 .app-name-label {
-                    font-size: 3.5rem;
+                    font-size: 1.5rem;
                     font-weight: 800;
                     margin-right: 20px;
                     margin-left: 50px;
@@ -341,7 +341,7 @@ def setup_page():
             # Add app name to the first column
             with nav_cols[0]:
                 st.markdown(
-                    f'<div style="font-size: 2.2rem; font-weight: 800; opacity: 0.8; padding: 15px 5px">{app_name}</div>',
+                    f'<div style="font-size: 1.5rem; font-weight: 800; opacity: 0.8;">{app_name}</div>',
                     unsafe_allow_html=True,
                 )
 
@@ -617,7 +617,7 @@ def document_processing_page():
         """
     <style>
     .content {
-        margin-top: 300px;
+        margin-top: 200px;
         
     </style>
     """,
@@ -625,19 +625,24 @@ def document_processing_page():
     )
 
     st.markdown(
-        "<p style='color: white; text-align: center; opacity: 0.8; margin-bottom: 0.8em; font-size: 60px;'>Document Upload and Processing</p>",
+        "<p style='color: white; text-align: center; opacity: 0.8; margin-top: 50px;font-weight:bold; font-size: 5rem;'>Document Upload and Processing</p>",
         unsafe_allow_html=True,
     )
 
-    # Add a toggle for scanned document processing
+    # Add a bigger heading for the radio buttons
+    st.markdown(
+        "<h2 style='text-align: left;'>Select Document Type</h2>",
+        unsafe_allow_html=True,
+    )
+
+    # Create radio buttons with a custom style
     processing_mode = st.radio(
-        "Select Document Type", ["Regular Document", "Scanned Document (OCR)"]
+        "", ["Regular Document", "Scanned Document (OCR)"], index=0
     )
 
     # Determine upload type based on processing mode
     is_scanned = processing_mode == "Scanned Document (OCR)"
     uploaded_file = upload_document(allow_scanned=is_scanned)
-
     template = st.selectbox(
         "Choose a template for extraction",
         ["Default", "Data Only", "Analytics Only", "Specific Entities"],
@@ -702,7 +707,7 @@ def document_processing_page():
 
 # Function to handle document upload
 def upload_document(allow_scanned=False):
-    st.subheader("📤 Upload Document")
+    st.subheader("Upload Document")
     if "uploaded_file" not in st.session_state:
         st.session_state.uploaded_file = None
 
@@ -933,16 +938,44 @@ def display_graphs(result, uploaded_file):
         "Sentence Count": result["analytics"]["sentence_count"],
         "Avg Sentence Length": round(result["analytics"]["average_sentence_length"], 2),
     }
+
+    # Assign each metric a numerical value to apply the color gradient
+    metric_values = {"Word Count": 0, "Sentence Count": 10, "Avg Sentence Length": 50}
+
+    # Create the figure with color gradient based on the metric
     fig = go.Figure(
         data=[
-            go.Bar(name=metric, x=[metric], y=[value])
+            go.Bar(
+                name=metric,
+                x=[metric],
+                y=[value],
+                marker=dict(
+                    color=[
+                        metric_values[metric]
+                    ],  # Assign a value from the metric_values dictionary
+                    colorscale="Blugrn",
+                ),
+            )
             for metric, value in metrics.items()
         ]
     )
 
-    fig.update_layout(title_text="Basic Document Metrics", barmode="group")
-    st.plotly_chart(fig, use_container_width=True)
+    # Update the layout with title and bar mode
+    fig.update_layout(
+        title_text="Basic Document Metrics",
+        barmode="group",
+        title_x=0.5,
+        title_font=dict(size=18),
+        margin=dict(
+            t=100,  # Top margin
+            b=50,  # Bottom margin
+            l=50,  # Left margin
+            r=50,  # Right margin
+        ),
+    )
 
+    # Display the chart in Streamlit
+    st.plotly_chart(fig, use_container_width=True)
     # File Size Comparison Graph
     original_size, extracted_size = calculate_file_sizes(uploaded_file, result)
     size_diff = original_size - extracted_size
@@ -950,8 +983,18 @@ def display_graphs(result, uploaded_file):
 
     fig = go.Figure(
         data=[
-            go.Bar(name="Original Size", x=["Document Size"], y=[original_size]),
-            go.Bar(name="Extracted Size", x=["Document Size"], y=[extracted_size]),
+            go.Bar(
+                name="Original Size",
+                x=["Document Size"],
+                y=[original_size],
+                marker=dict(color="rgb(0,111,60)"),
+            ),
+            go.Bar(
+                name="Extracted Size",
+                x=["Document Size"],
+                y=[extracted_size],
+                marker=dict(color="rgb(204,255,140)"),
+            ),
         ]
     )
     fig.update_layout(title_text="Document Size Comparison (MB)", barmode="group")
@@ -997,8 +1040,12 @@ def display_database_options(result, filename):
 
 # Function for saved documents page
 def saved_documents_page():
-    st.title("💾 Saved Documents")
-    st.info("This page displays all documents saved in the selected storage.")
+    st.markdown(
+        """
+        <h1 style='text-align: center; opacity:0.8; margin-top: 50px; font-size: 5rem;'>Saved Documents</h1>
+        """,
+        unsafe_allow_html=True,
+    )
 
     database_options = ["Secure Storage", "MongoDB Storage", "MySQL Storage"]
     selected_db = st.selectbox("Select Database", database_options)
@@ -1057,16 +1104,6 @@ def saved_documents_page():
 
 # Function for chat interface page
 def chat_interface_page():
-    st.markdown(
-        """
-    <style>
-    .content {
-        margin-top: 500px;
-        
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
     st.title("💬 Chat with Your Document")
     st.info("This feature allows you to ask questions about your processed documents.")
 
@@ -1105,16 +1142,6 @@ def chat_interface_page():
 
 # Function to handle API token generation and management
 def api_token_page():
-    st.markdown(
-        """
-    <style>
-    .content {
-        margin-top: 500px;
-        
-    </style>
-    """,
-        unsafe_allow_html=True,
-    )
     st.title("🔑 API Token and Upload")
     st.info(
         "Generate API tokens and use them to upload and process documents via API. You can use these tokens with tools like Postman or other websites."
